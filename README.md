@@ -121,53 +121,117 @@ EagleEye/
 ├── requirements.txt      # Project dependencies
 └── README.md             # This file
 ```
-```
-
-***
-
-## **Diagrams and Explanation**
 
 
-**1. Entity-Relationship Diagram (ERD)**
-images/Entity-Relation.png
-This describes our database structure.
-*   **Entities:** `Student`, `Attendance`, `Violation`.
-*   **Student Attributes:** `id` (Primary Key), `student_id` (Unique), `name`, `image_filename`.
-*   **Attendance Attributes:** `id` (Primary Key), `student_id` (Foreign Key to Student), `timestamp`, `location`.
-*   **Violation Attributes:** `id` (Primary Key), `student_id` (Foreign Key to Student), `violation_type`, `timestamp`, `snapshot_path`, `details`.
-*   **Relationships:**
-    *   A `Student` can have many `Attendance` records.
-    *   A `Student` can have many `Violation` records.
+## Diagrams and System Explanation
 
-**2. Data Flow Diagram (DFD - Level 0)**
-images/dfd_level-0.png
-images/dfd_level-1.png
-This shows the overall system context.
-*   **External Entities:** `Student`, `Invigilator`.
-*   **Process:** `0. Eagle Eye System`.
-*   **Data Flows:**
-    *   `Student` -> provides `Face & Audio Data` -> `System`.
-    *   `Invigilator` -> provides `Control Commands` (Start/Stop) -> `System`.
-    *   `System` -> provides `Live Feed & Alerts` -> `Invigilator`.
-    *   `System` -> provides `Violation & Attendance Reports` -> (Data Store).
+This section provides a visual and conceptual overview of the **EagleEye – Smart Attendance and Exam Supervision System**, covering database design, data flow, system architecture, and the machine learning workflow.
 
-**3. Block Diagram**
-images/working-visual-explanation.png
-images/Woking-Diagram.png
-This shows the high-level components and their interaction.
-*   **Input Block:** Webcam, Microphone.
-*   **Processing Block (Eagle Eye Core):**
-    *   Sub-Block: `Face Recognition`
-    *   Sub-Block: `Object Detection`
-    *   Sub-Block: `Pose/Gaze Estimation`
-    *   Sub-Block: `Audio Analysis`
-    *   Sub-Block: `Alert System`
-    *   Sub-Block: `Database Logger`
-*   **Output Block:**
-    *   `Web Dashboard (UI)`
-    *   `Alerts Log`
-    *   `Evidence Snapshots (Files)`
-    *   `Attendance Reports (CSV)`
-**3. Pipeline Diagram**
-images/Ml-Pipeline.png
+---
+
+### 1. Entity–Relationship Diagram (ERD)
+
+<p align="center">
+  <img src="images/Entity-Relation.png" width="700"/>
+</p>
+
+The Entity–Relationship Diagram illustrates the database structure of the system.
+
+**Entities**
+- Student
+- Attendance
+- Violation
+
+**Student Attributes**
+- id (Primary Key)
+- student_id (Unique)
+- name
+- image_filename
+
+**Attendance Attributes**
+- id (Primary Key)
+- student_id (Foreign Key → Student)
+- timestamp
+- location
+
+**Violation Attributes**
+- id (Primary Key)
+- student_id (Foreign Key → Student)
+- violation_type
+- timestamp
+- snapshot_path
+- details
+
+**Relationships**
+- A Student can have multiple Attendance records.
+- A Student can have multiple Violation records.
+
+---
+
+### 2. Data Flow Diagram (DFD)
+
+<p align="center">
+  <img src="images/dfd_level-0.png" width="700"/>
+</p>
+
+<p align="center">
+  <img src="images/dfd_level-1.png" width="700"/>
+</p>
+
+The Data Flow Diagram represents the overall system context and internal data movement.
+
+**External Entities**
+- Student
+- Invigilator
+
+**Core Process**
+- EagleEye System
+
+**Data Flows**
+- Student → provides Face and Audio Data → System
+- Invigilator → provides Control Commands (Start / Stop) → System
+- System → provides Live Feed and Alerts → Invigilator
+- System → generates Attendance and Violation Reports → Data Store
+
+---
+
+### 3. System Block Diagram
+
+<p align="center">
+  <img src="images/working-visual-explanation.png" width="700"/>
+</p>
+
+<p align="center">
+  <img src="images/Working_diagram.png" width="700"/>
+</p>
+
+The Block Diagram illustrates the high-level system components and their interactions.
+
+**Input Layer**
+- Webcam
+- Microphone
+
+**Processing Layer (EagleEye Core)**
+- Face Recognition
+- Object Detection
+- Pose and Gaze Estimation
+- Audio Analysis
+- Alert System
+- Database Logger
+
+**Output Layer**
+- Web Dashboard (User Interface)
+- Alerts Log
+- Evidence Snapshots
+- Attendance Reports (CSV)
+
+---
+
+### 4. Machine Learning Pipeline
+
+<p align="center">
+  <img src="images/ML-Pipeline.png" width="700"/>
+</p>
+
+The Machine Learning Pipeline demonstrates the end-to-end flow from data acquisition to intelligent decision-making, including preprocessing, model inference, violation detection, and report generation.
 
