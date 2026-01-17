@@ -125,11 +125,8 @@ EagleEye/
 
 ***
 
-### **Task 2 & 3: Final Diagrams and Code Review**
+## **Diagrams and Explanation**
 
-This `README.md` already contains a high-level description of the architecture. For the detailed diagrams (ERD, DFD, etc.), these are typically created using external tools. I can provide you with the structured information needed to create them easily using any diagramming software (like Lucidchart, draw.io, or even PowerPoint).
-
-Let's generate the information for each diagram now.
 
 **1. Entity-Relationship Diagram (ERD)**
 
