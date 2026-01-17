@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register Student</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .back-link { position: absolute; top: 20px; left: 20px; color: var(--accent-primary); text-decoration: none; z-index: 20; }
+        .register-container { display: flex; flex-direction: column; align-items: center; padding-top: 50px; gap: 20px;}
+        .form-inline { display: flex; gap: 10px; align-items: center; }
+        .form-inline input { padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); background: var(--bg-dark); color: var(--text-primary); }
+        .status-banner { padding: 10px; border-radius: 5px; width: 80%; text-align: center; }
+        .status-success { background-color: var(--accent-green); color: var(--bg-dark); }
+        .status-error { background-color: var(--accent-red); color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('hub') }}" class="back-link">&larr; Back to Hub</a>
+    <div class="register-container">
+        <h1>Student Registration</h1>
+        <div class="video-feed-wrapper" style="width: 640px; height: 480px;">
+            <img id="video-feed" src="{{ url_for('static', filename='placeholder.png') }}" alt="Live Video Feed">
+        </div>
+        <div id="status-banner" class="status-banner" style="display:none;"></div>
+        <div class="form-inline">
+            <input type="text" id="name" placeholder="Enter Name">
+            <input type="text" id="roll_number" placeholder="Enter Roll Number">
+            <button id="capture-btn" class="btn btn-primary">Capture & Register</button>
+        </div>
+    </div>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io('/register');
+            const videoFeed = document.getElementById('video-feed');
+            const captureBtn = document.getElementById('capture-btn');
+            const nameInput = document.getElementById('name');
+            const rollInput = document.getElementById('roll_number');
+            const statusBanner = document.getElementById('status-banner');
+
+            socket.on('connect', () => console.log('Connected to register namespace.'));
+            socket.on('video_frame', (data) => {
+                videoFeed.src = `data:image/jpeg;base64,${data.image}`;
+            });
+            socket.on('registration_status', (data) => {
+                statusBanner.textContent = data.message;
+                statusBanner.className = `status-banner status-${data.status}`;
+                statusBanner.style.display = 'block';
+                setTimeout(() => { statusBanner.style.display = 'none'; }, 5000);
+            });
+
+            captureBtn.addEventListener('click', () => {
+                const name = nameInput.value;
+                const rollNumber = rollInput.value;
+                if (!name || !rollNumber) {
+                    alert('Name and Roll Number cannot be empty.');
+                    return;
+                }
+                socket.emit('register_face', { name: name, roll_number: rollNumber });
+            });
+        });
+    </script>
+</body>
+</html>

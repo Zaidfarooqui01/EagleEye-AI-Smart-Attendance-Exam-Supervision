@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eagle Eye - Command Hub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .hub-container { text-align: center; margin-top: 5%; }
+        .hub-menu { display: inline-flex; flex-direction: column; gap: 20px; margin-top: 30px; }
+        .hub-option {
+            background-color: var(--bg-medium);
+            color: var(--text-primary);
+            padding: 30px 60px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: transform 0.2s, background-color 0.2s;
+            border: 1px solid var(--border-color);
+        }
+        .hub-option:hover { transform: scale(1.05); background-color: var(--bg-light); }
+        .logout-link { position: absolute; top: 20px; right: 20px; color: var(--accent-primary); text-decoration: none;}
+    </style>
+</head>
+<body>
+    <div class="hub-container">
+        <h1>🦅 Welcome to the Eagle Eye Command Hub</h1>
+        <p>Please select an operation to begin.</p>
+        
+        <div class="hub-menu">
+            <!-- The user's role will determine which links are shown -->
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('register') }}" class="hub-option">👤 Register New Student</a>
+            {% endif %}
+            <a href="{{ url_for('attendance') }}" class="hub-option">✅ Mark Daily Attendance</a>
+            <a href="{{ url_for('supervision') }}" class="hub-option">Exam Surveillance</a>
+        </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eagle Eye - Live Monitoring Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='../data/logos/1favicon-32x32.png') }}" type="image/png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-medium: #1e293b;
+            --bg-light: #334155;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #6366f1;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #808080 0%, #008080 100%);
+            color: #FFFFFF;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(59, 75, 101, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: 0 0 15px rgba(54, 74, 112, 0.5);
+            transition: var(--transition);
+        }
+
+        .logo img:hover {
+            transform: rotate(10deg);
+        }
+
+        .logo p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .feature-statuses {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .feature-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-status.on {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .feature-status.off {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-secondary);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .dot.connected {
+            background-color: var(--accent-green);
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        .dot.disconnected {
+            background-color: var(--accent-red);
+        }
+
+        #time-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--bg-medium);
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 25px;
+        }
+
+        .video-container {
+            background: var(--bg-medium);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .video-feed-wrapper {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            overflow: hidden;
+        }
+
+        #video-feed {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+        }
+
+        .controls {
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--accent-red);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .sidebar-section {
+            background: var(--bg-medium);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+            animation: fadeIn 0.6s ease-out 0.2s both;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: var(--accent-primary);
+        }
+
+        .stat-card h4 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-card p {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .alerts-log {
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 300px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .alert-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .alert-item {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid var(--accent-yellow);
+            transition: var(--transition);
+        }
+
+        .alert-item:hover {
+            transform: translateX(5px);
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        .alert-item.severity-high {
+            border-left-color: var(--accent-red);
+        }
+
+        .alert-item.severity-medium {
+            border-left-color: var(--accent-yellow);
+        }
+
+        .alert-item.severity-low {
+            border-left-color: var(--accent-primary);
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .message {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Controls Section */
+        .controls-section {
+            margin-top: 0;
+            background: var(--bg-medium);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            animation: fadeIn 0.6s ease-out 0.4s both;
+        }
+
+        .controls-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #475569;
+            transition: .4s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-statuses {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <h1><img src="{{ url_for('static', filename='../data/logos/circle-croped-logo.png') }}"> Eagle Eye</h1>
+                <p>Live Exam Supervision</p>
+            </div>
+
+            <div id="feature-statuses" class="feature-statuses">
+                <span id="status-audio" class="feature-status on"><i class="fas fa-microphone"></i> Audio</span>
+                <span id="status-gaze" class="feature-status on"><i class="fas fa-eye"></i> Gaze</span>
+                <span id="status-object" class="feature-status on"><i class="fas fa-mobile-alt"></i> Object</span>
+                <span id="status-posture" class="feature-status on"><i class="fas fa-user"></i> Posture</span>
+            </div>
+
+            <div class="status-indicators">
+                <div class="indicator">
+                    <span id="status-dot" class="dot disconnected"></span>
+                    <span id="status-text">DISCONNECTED</span>
+                </div>
+                <div class="indicator">
+                    <span id="time-display">--:--:--</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="video-container">
+                <div class="video-feed-wrapper">
+                    <img id="video-feed" src="{{ url_for('static', filename='circle-croped-logo.png') }}"
+                        alt="Live Video Feed">
+                    <div id="supervision-overlay" class="overlay">SUPERVISION PAUSED</div>
+                </div>
+                <div class="controls">
+                    <button id="start-btn" class="btn btn-primary"><i class="fas fa-play"></i> Start Supervision</button>
+                    <button id="stop-btn" class="btn btn-secondary" disabled><i class="fas fa-stop"></i> Stop Supervision</button>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-chart-bar"></i> System Stats</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h4>FPS</h4>
+                            <p id="fps-stat">--</p>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Faces</h4>
+                            <p id="faces-stat">--</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="sidebar-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+                    <h3><i class="fas fa-bell"></i> Real-Time Alerts</h3>
+                    <div id="alerts-log" class="alerts-log">
+                        <div class="alert-placeholder">Monitoring for suspicious activity...</div>
+                    </div>
+                </div>
+                
+                <!-- Admin Controls Panel -->
+                <!-- {% if current_user.role == 'admin' %} -->
+                <div class="controls-section">
+                    <h3><i class="fas fa-cog"></i> Admin Controls</h3>
+                    <div class="control-item" title="Only-Admin Controls">
+                        <span><i class="fas fa-microphone"></i> Audio Analysis</span>
+                        <label class="switch"><input type="checkbox" id="toggle-audio" data-module="audio" checked><span
+                                class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span><i class="fas fa-eye"></i> Gaze Detection</span>
+                        <label class="switch"><input type="checkbox" id="toggle-gaze" data-module="gaze" checked><span
+                                class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span><i class="fas fa-mobile-alt"></i> Object Detection</span>
+                        <label class="switch"><input type="checkbox" id="toggle-object" data-module="object"
+                                checked><span class="slider"></span></label>
+                    </div>
+                    <div class="control-item">
+                        <span><i class="fas fa-user"></i> Posture Analysis</span>
+                        <label class="switch"><input type="checkbox" id="toggle-posture" data-module="posture"
+                                checked><span class="slider"></span></label>
+                    </div>
+                </div>
+                <!-- {% endif %} -->
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize animations
+        AOS.init({
+            duration: 800,
+            once: true,
+            easing: 'ease-out-quart'
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Explicitly connect to the '/supervision' namespace
+            const socket = io('/supervision');
+
+            // --- References to elements ---
+            const featureStatuses = {
+                audio: document.getElementById('status-audio'),
+                gaze: document.getElementById('status-gaze'),
+                object: document.getElementById('status-object'),
+                posture: document.getElementById('status-posture')
+            };
+            const toggles = document.querySelectorAll('.switch input');
+
+            // Get references to all the HTML elements
+            const videoFeed = document.getElementById('video-feed');
+            const supervisionOverlay = document.getElementById('supervision-overlay');
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const timeDisplay = document.getElementById('time-display');
+            const fpsStat = document.getElementById('fps-stat');
+            const facesStat = document.getElementById('faces-stat');
+            const alertsLog = document.getElementById('alerts-log');
+
+            // --- Socket.IO Event Listeners ---
+
+            socket.on('controls_update', (data) => {
+                console.log('Received control update:', data);
+                for (const module in data) {
+                    if (featureStatuses[module]) {
+                        const statusElement = featureStatuses[module];
+                        if (data[module]) {
+                            statusElement.classList.add('on');
+                            statusElement.classList.remove('off');
+                        } else {
+                            statusElement.classList.add('off');
+                            statusElement.classList.remove('on');
+                        }
+                    }
+                }
+            });
+
+            // --- Event listener for the control toggles ---
+            toggles.forEach(toggle => {
+                toggle.addEventListener('change', () => {
+                    const module = toggle.dataset.module;
+                    const enabled = toggle.checked;
+                    console.log(`Sending control change: ${module} -> ${enabled}`);
+                    socket.emit('update_controls', { module: module, enabled: enabled });
+                });
+            });
+
+            socket.on('connect', () => {
+                console.log('Connected to /supervision namespace!');
+                statusDot.classList.remove('disconnected');
+                statusDot.classList.add('connected');
+                statusText.textContent = 'CONNECTED';
+                
+                // Add pulse animation when connected
+                statusDot.style.animation = 'pulse 2s infinite';
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from /supervision namespace.');
+                statusDot.classList.remove('connected');
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'DISCONNECTED';
+                statusDot.style.animation = 'none';
+                stopSupervisionUI();
+            });
+
+            socket.on('video_frame', (data) => {
+                videoFeed.src = `data:image/jpeg;base64,${data.image}`;
+                fpsStat.textContent = data.fps;
+                facesStat.textContent = data.face_count;
+                
+                // Add animation to stats when updated
+                fpsStat.style.transform = 'scale(1.1)';
+                facesStat.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    fpsStat.style.transform = 'scale(1)';
+                    facesStat.style.transform = 'scale(1)';
+                }, 300);
+            });
+
+            socket.on('new_alert', (alert) => {
+                const placeholder = alertsLog.querySelector('.alert-placeholder');
+                if (placeholder) placeholder.remove();
+
+                const alertItem = document.createElement('div');
+                alertItem.classList.add('alert-item', `severity-${alert.severity}`);
+                alertItem.innerHTML = `
+                    <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+                    <div class="message">${alert.type}</div>
+                    <div class="details">${alert.message}</div>
+                `;
+                alertsLog.prepend(alertItem);
+                
+                // Add highlight effect to alerts section header
+                const alertsHeader = document.querySelector('.sidebar-section h3');
+                alertsHeader.style.color = 'var(--accent-red)';
+                setTimeout(() => {
+                    alertsHeader.style.color = 'var(--text-primary)';
+                }, 1000);
+            });
+
+            socket.on('supervision_stopped', () => {
+                stopSupervisionUI();
+                console.log('Supervision stopped by server.');
+            });
+
+            // --- UI Functions ---
+            function startSupervisionUI() {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                supervisionOverlay.style.display = 'none';
+                alertsLog.innerHTML = '<div class="alert-placeholder">Monitoring for suspicious activity...</div>';
+                
+                // Add animation to video feed
+                videoFeed.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    videoFeed.style.transform = 'scale(1)';
+                }, 300);
+            }
+
+            function stopSupervisionUI() {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                supervisionOverlay.style.display = 'flex';
+                videoFeed.src = "{{ url_for('static', filename='circle-croped-logo.png') }}";
+                fpsStat.textContent = '--';
+                facesStat.textContent = '--';
+            }
+
+            // --- Button Event Handlers ---
+            startBtn.addEventListener('click', () => {
+                console.log('Emitting start_supervision to /supervision namespace...');
+                socket.emit('start_supervision');
+                startSupervisionUI();
+                
+                // Button animation
+                startBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    startBtn.style.transform = 'scale(1)';
+                }, 200);
+            });
+
+            stopBtn.addEventListener('click', () => {
+                console.log('Emitting stop_supervision to /supervision namespace...');
+                socket.emit('stop_supervision');
+                stopSupervisionUI();
+                
+                // Button animation
+                stopBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    stopBtn.style.transform = 'scale(1)';
+                }, 200);
+            });
+
+            // --- Clock Utility ---
+            function updateTime() {
+                timeDisplay.textContent = new Date().toLocaleTimeString();
+            }
+            setInterval(updateTime, 1000);
+            updateTime();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mark Attendance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .back-link { position: absolute; top: 20px; left: 20px; color: var(--accent-primary); text-decoration: none; z-index: 20; }
+        .attendance-container { text-align: center; }
+        #attendance-log { list-style: none; padding: 0; max-height: 80vh; overflow-y: auto; background: var(--bg-medium); border-radius: 8px; padding: 10px; margin-left: 20px; }
+        .log-item { background: var(--bg-dark); padding: 10px; margin-bottom: 5px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('hub') }}" class="back-link">&larr; Back to Hub</a>
+    <div class="main-content" style="padding-top: 50px;">
+        <div class="video-container">
+            <h1>Daily Attendance</h1>
+            <div class="video-feed-wrapper">
+                <img id="video-feed" src="{{ url_for('static', filename='placeholder.png') }}" alt="Live Video Feed">
+            </div>
+        </div>
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>Today's Log</h3>
+                <ul id="attendance-log">
+                    <li>Awaiting scans...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io('/attendance');
+            const videoFeed = document.getElementById('video-feed');
+            const attendanceLog = document.getElementById('attendance-log');
+            let firstLog = true;
+
+            socket.on('connect', () => console.log('Connected to attendance namespace.'));
+            socket.on('video_frame', (data) => {
+                videoFeed.src = `data:image/jpeg;base64,${data.image}`;
+            });
+            socket.on('attendance_update', (data) => {
+                if (firstLog) {
+                    attendanceLog.innerHTML = '';
+                    firstLog = false;
+                }
+                const li = document.createElement('li');
+                li.className = 'log-item';
+                li.textContent = `${data.timestamp} - ${data.name} (${data.roll_number})`;
+                attendanceLog.prepend(li);
+            });
+        });
+    </script>
+</body>
+</html>
