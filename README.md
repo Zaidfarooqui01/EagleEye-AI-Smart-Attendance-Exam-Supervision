@@ -129,7 +129,7 @@ EagleEye/
 
 
 **1. Entity-Relationship Diagram (ERD)**
-
+images/Entity-Relation.png
 This describes our database structure.
 *   **Entities:** `Student`, `Attendance`, `Violation`.
 *   **Student Attributes:** `id` (Primary Key), `student_id` (Unique), `name`, `image_filename`.
@@ -140,7 +140,8 @@ This describes our database structure.
     *   A `Student` can have many `Violation` records.
 
 **2. Data Flow Diagram (DFD - Level 0)**
-
+images/dfd_level-0.png
+images/dfd_level-1.png
 This shows the overall system context.
 *   **External Entities:** `Student`, `Invigilator`.
 *   **Process:** `0. Eagle Eye System`.
@@ -151,7 +152,8 @@ This shows the overall system context.
     *   `System` -> provides `Violation & Attendance Reports` -> (Data Store).
 
 **3. Block Diagram**
-
+images/working-visual-explanation.png
+images/Woking-Diagram.png
 This shows the high-level components and their interaction.
 *   **Input Block:** Webcam, Microphone.
 *   **Processing Block (Eagle Eye Core):**
@@ -166,6 +168,6 @@ This shows the high-level components and their interaction.
     *   `Alerts Log`
     *   `Evidence Snapshots (Files)`
     *   `Attendance Reports (CSV)`
-
-
+**3. Pipeline Diagram**
+images/Ml-Pipeline.png
 
