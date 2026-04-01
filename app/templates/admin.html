@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — EagleEye</title>
+    <meta name="description" content="Institute-wide attendance analytics, defaulter lists, emergency headcount, audit logs, and ERP integration.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root{--bg:#0b0f1a;--bg2:#111827;--bg3:#1f2937;--border:rgba(255,255,255,.08);--accent:#6366f1;--accent2:#818cf8;--green:#10b981;--red:#f43f5e;--yellow:#f59e0b;--cyan:#22d3ee;--text:#f1f5f9;--muted:#94a3b8;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+        .topbar{height:60px;background:rgba(17,24,39,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100;}
+        .topbar-brand{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:700;text-decoration:none;color:var(--text);}
+        .brand-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--green),#059669);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+        .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+        .nav-user{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);}
+        .avatar{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;}
+        .btn-back{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:.8rem;font-family:'Inter',sans-serif;text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;}
+        .btn-back:hover{color:var(--text);}
+        .page{max-width:1440px;margin:0 auto;padding:28px 24px;}
+        .page-header{margin-bottom:24px;}
+        .page-header h1{font-size:1.6rem;font-weight:800;margin-bottom:4px;}
+        .page-header p{font-size:.85rem;color:var(--muted);}
+
+        /* Emergency Banner */
+        .emergency-bar{background:linear-gradient(135deg,rgba(244,63,94,.15),rgba(245,158,11,.08));border:1px solid rgba(244,63,94,.3);border-radius:14px;padding:16px 22px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+        .emergency-bar .info h3{font-size:.95rem;font-weight:700;color:var(--red);display:flex;align-items:center;gap:8px;}
+        .emergency-bar .info p{font-size:.78rem;color:var(--muted);margin-top:2px;}
+        .emergency-nums{display:flex;gap:20px;}
+        .ecount{text-align:center;}
+        .ecount-val{font-size:1.8rem;font-weight:800;}
+        .ecount-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+
+        /* KPI grid */
+        .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+        @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+        @media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+        .kpi-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:20px;transition:.3s;}
+        .kpi-card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px);}
+        .kpi-label{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+        .kpi-label i{color:var(--accent2);}
+        .kpi-val{font-size:2rem;font-weight:800;}
+        .kpi-change{font-size:.7rem;color:var(--muted);margin-top:4px;}
+
+        /* Charts row */
+        .charts-row{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:24px;}
+        @media(max-width:900px){.charts-row{grid-template-columns:1fr;}}
+        .chart-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:20px;}
+        .chart-card h3{font-size:.85rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+        .chart-card h3 i{color:var(--accent2);}
+        .chart-wrap{position:relative;height:220px;}
+
+        /* Tables */
+        .table-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+        .table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .table-header h3{font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+        .btn-export{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--accent2);padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;}
+        .btn-export:hover{background:rgba(99,102,241,.2);}
+        table{width:100%;border-collapse:collapse;}
+        thead th{padding:12px 20px;background:rgba(255,255,255,.02);text-align:left;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
+        tbody td{padding:13px 20px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        tbody tr:last-child td{border-bottom:none;}
+        tbody tr:hover td{background:rgba(255,255,255,.02);}
+        .badge{padding:2px 8px;border-radius:6px;font-size:.65rem;font-weight:700;}
+        .badge.risk{background:rgba(244,63,94,.15);color:var(--red);}
+        .badge.warn{background:rgba(245,158,11,.15);color:var(--yellow);}
+        .badge.safe{background:rgba(16,185,129,.15);color:var(--green);}
+        .no-data{text-align:center;padding:40px;color:var(--muted);font-size:.82rem;}
+        .no-data i{display:block;font-size:1.5rem;margin-bottom:8px;}
+
+        /* Audit log */
+        .audit-item{display:flex;gap:12px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem;}
+        .audit-item:last-child{border-bottom:none;}
+        .audit-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;}
+        .audit-text{flex:1;color:var(--muted);}
+        .audit-text strong{color:var(--text);}
+        .audit-time{font-size:.68rem;color:var(--muted);flex-shrink:0;}
+
+        /* Dept breakdown */
+        .dept-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+        @media(max-width:800px){.dept-grid{grid-template-columns:repeat(2,1fr);}}
+        .dept-card{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:.2s;}
+        .dept-card:hover{border-color:rgba(255,255,255,.15);}
+        .dept-name{font-size:.75rem;color:var(--muted);margin-bottom:6px;}
+        .dept-val{font-size:1.4rem;font-weight:800;}
+        .dept-sub{font-size:.68rem;color:var(--muted);margin-top:2px;}
+
+        /* Registration Form Inputs */
+        input[type="text"],input[type="email"],input[type="number"]{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:.9rem;transition:.2s;}
+        input[type="text"]:focus,input[type="email"]:focus,input[type="number"]:focus{outline:none;border-color:var(--accent2);background:rgba(99,102,241,.05);}
+        input[type="text"]::placeholder,input[type="email"]::placeholder,input[type="number"]::placeholder{color:var(--muted);}
+
+        /* Toast Notification System */
+        .toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:12px;}
+        .toast{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;min-width:300px;display:flex;align-items:flex-start;gap:12px;animation:slideInRight .3s ease-out;box-shadow:0 8px 32px rgba(0,0,0,.3);}
+        .toast.success{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.1);}
+        .toast.error{border-color:rgba(244,63,94,.3);background:rgba(244,63,94,.1);}
+        .toast.info{border-color:rgba(99,102,241,.3);background:rgba(99,102,241,.1);}
+        .toast-icon{font-size:1.2rem;flex-shrink:0;min-width:24px;text-align:center;}
+        .toast.success .toast-icon{color:var(--green);}
+        .toast.error .toast-icon{color:var(--red);}
+        .toast.info .toast-icon{color:var(--accent2);}
+        .toast-content{flex:1;}
+        .toast-title{font-weight:600;font-size:.9rem;margin-bottom:2px;}
+        .toast-message{font-size:.85rem;color:var(--muted);}
+        .toast-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .toast-close:hover{color:var(--text);}
+        @keyframes slideInRight{from{transform:translateX(400px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+        @keyframes slideOutRight{from{transform:translateX(0);opacity:1;}to{transform:translateX(400px);opacity:0;}}
+        .toast.removing{animation:slideOutRight .3s ease-in;}
+    </style>
+</head>
+<body>
+<nav class="topbar">
+    <a href="{{ url_for('hub') }}" class="topbar-brand">
+        <div class="brand-icon">🛡</div>
+        EagleEye — Admin Dashboard
+    </a>
+    <div class="topbar-right">
+        <div class="nav-user">
+            <div class="avatar">{{ current_user.username[0].upper() }}</div>
+            <span>{{ current_user.name }}</span>
+        </div>
+        <a href="{{ url_for('hub') }}" class="btn-back"><i class="fas fa-arrow-left"></i> Hub</a>
+        <a href="{{ url_for('attendance') }}" class="btn-back"><i class="fas fa-camera"></i> Attendance</a>
+        <a href="{{ url_for('logout') }}" class="btn-back" style="color:var(--red);border-color:rgba(244,63,94,.3);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</nav>
+
+<div class="page">
+    <div class="page-header">
+        <h1>📊 Institute Dashboard</h1>
+        <p>Attendance analytics, defaulter lists, risk flags & audit logs — {{ current_user.department }}</p>
+    </div>
+
+    <!-- Emergency Headcount Banner -->
+    <div class="emergency-bar" id="emergency-bar">
+        <div class="info">
+            <h3><i class="fas fa-exclamation-circle"></i> Emergency Headcount — Real-Time</h3>
+            <p>Gate camera + classroom logs — use during evacuations</p>
+        </div>
+        <div class="emergency-nums">
+            <div class="ecount"><div class="ecount-val" style="color:var(--green);">142</div><div class="ecount-label">On Campus</div></div>
+            <div class="ecount"><div class="ecount-val" style="color:var(--accent2);">118</div><div class="ecount-label">In Classes</div></div>
+            <div class="ecount"><div class="ecount-val" style="color:var(--yellow);">24</div><div class="ecount-label">Roaming / Out</div></div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="fas fa-users"></i> Total Students</div>
+            <div class="kpi-val" style="color:var(--accent2);">486</div>
+            <div class="kpi-change">Across all departments</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="fas fa-check-circle"></i> Avg Attendance</div>
+            <div class="kpi-val" style="color:var(--green);">84%</div>
+            <div class="kpi-change">↑ 2% from last month</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="fas fa-exclamation-triangle"></i> Defaulters</div>
+            <div class="kpi-val" style="color:var(--red);">23</div>
+            <div class="kpi-change">Below 75% threshold</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="fas fa-exclamation-circle"></i> Violations Today</div>
+            <div class="kpi-val" id="kpi-today" style="color:var(--yellow);">—</div>
+            <div class="kpi-change">Exam supervision alerts</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><i class="fas fa-user-check"></i> AI Accuracy</div>
+            <div class="kpi-val" style="color:var(--green);">99.2%</div>
+            <div class="kpi-change">&lt;2% false reject rate</div>
+        </div>
+    </div>
+
+    <!-- Add New Student Button -->
+    <div style="display:flex;gap:12px;margin-bottom:24px;">
+        <button onclick="openRegisterStudentModal()" style="padding:14px 24px;background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(16,185,129,.08));border:1px solid rgba(99,102,241,.3);color:var(--accent2);border-radius:10px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;font-size:.9rem;transition:.3s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 12px rgba(99,102,241,.15);" onmouseover="this.style.background='linear-gradient(135deg,rgba(99,102,241,.25),rgba(16,185,129,.15))';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(99,102,241,.25)';" onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.15),rgba(16,185,129,.08))';this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(99,102,241,.15)';">
+            <i class="fas fa-user-plus" style="font-size:1.1rem;"></i> Add New Student
+        </button>
+    </div>
+
+    <!-- Real-time Exam Violations Monitor -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-bell" style="color:var(--red);"></i> Real-Time Exam Violations</h3>
+            <span style="font-size:.72rem;color:var(--muted);" id="violations-live-status">● Monitoring...</span>
+        </div>
+        <div id="violations-live-container" style="max-height:350px;overflow-y:auto;padding:0;">
+            <div class="no-data" id="violations-empty" style="display:block;"><i class="fas fa-shield-check" style="color:var(--green);"></i>No violations detected. Exam under control.</div>
+        </div>
+    </div>
+
+    <!-- Department Breakdown -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-building" style="color:var(--accent2);"></i> Department Attendance Trends</h3>
+        </div>
+        <div style="padding:16px 20px;">
+            <div class="dept-grid">
+                <div class="dept-card"><div class="dept-name">Computer Science</div><div class="dept-val" style="color:var(--green);">87%</div><div class="dept-sub">126 students · 3 defaulters</div></div>
+                <div class="dept-card"><div class="dept-name">Electronics</div><div class="dept-val" style="color:var(--green);">84%</div><div class="dept-sub">98 students · 5 defaulters</div></div>
+                <div class="dept-card"><div class="dept-name">Mechanical</div><div class="dept-val" style="color:var(--yellow);">78%</div><div class="dept-sub">112 students · 8 defaulters</div></div>
+                <div class="dept-card"><div class="dept-name">Civil</div><div class="dept-val" style="color:var(--green);">82%</div><div class="dept-sub">150 students · 7 defaulters</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3><i class="fas fa-chart-line"></i> Institute Attendance Over Time</h3>
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h3><i class="fas fa-chart-pie"></i> Violation Types</h3>
+            <div class="chart-wrap"><canvas id="typesChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Defaulter List -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-user-slash" style="color:var(--red);"></i> Defaulter List (Below 75%)</h3>
+            <div style="display:flex;gap:8px;">
+                <a href="/api/attendance/export" class="btn-export"><i class="fas fa-download"></i> Export CSV</a>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+        <table>
+            <thead><tr><th>#</th><th>Student</th><th>Dept</th><th>Attendance</th><th>Absences</th><th>Disciplinary</th><th>Risk</th></tr></thead>
+            <tbody>
+                <tr><td style="color:var(--muted);">1</td><td style="font-weight:600;">Zara Ahmed (CS-042)</td><td>CS</td><td style="color:var(--red);font-weight:700;">68%</td><td>8</td><td style="color:var(--yellow);">2</td><td><span class="badge risk">Critical</span></td></tr>
+                <tr><td style="color:var(--muted);">2</td><td style="font-weight:600;">Bilal Raza (CS-043)</td><td>CS</td><td style="color:var(--red);font-weight:700;">72%</td><td>6</td><td style="color:var(--yellow);">1</td><td><span class="badge risk">High Risk</span></td></tr>
+                <tr><td style="color:var(--muted);">3</td><td style="font-weight:600;">Sana Malik (CS-044)</td><td>CS</td><td style="color:var(--yellow);font-weight:700;">70%</td><td>7</td><td>0</td><td><span class="badge warn">At Risk</span></td></tr>
+                <tr><td style="color:var(--muted);">4</td><td style="font-weight:600;">Kamran Ali (EC-021)</td><td>EC</td><td style="color:var(--yellow);font-weight:700;">73%</td><td>6</td><td>0</td><td><span class="badge warn">At Risk</span></td></tr>
+                <tr><td style="color:var(--muted);">5</td><td style="font-weight:600;">Priya Sharma (ME-055)</td><td>ME</td><td style="color:var(--red);font-weight:700;">65%</td><td>10</td><td style="color:var(--yellow);">3</td><td><span class="badge risk">Critical</span></td></tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Correction / Audit Logs -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-history" style="color:var(--accent2);"></i> Correction & Audit Log</h3>
+            <span style="font-size:.72rem;color:var(--muted);">Last 24h · For compliance</span>
+        </div>
+        <div class="audit-item">
+            <div class="audit-icon" style="background:rgba(129,140,248,.15);"><span style="color:var(--accent2);">✏️</span></div>
+            <div class="audit-text"><strong>Dr. Sarah Khan</strong> changed CS-042 (Zara Ahmed) from Absent → Present · Reason: <em>"Late arrival, verified at door"</em></div>
+            <div class="audit-time">Today 10:15 AM</div>
+        </div>
+        <div class="audit-item">
+            <div class="audit-icon" style="background:rgba(245,158,11,.15);"><span style="color:var(--yellow);">⚠</span></div>
+            <div class="audit-text"><strong>Dr. Sarah Khan</strong> tagged CS-043 (Bilal Raza) as <strong style="color:var(--yellow);">Disciplinary Absent</strong> · Reason: <em>"Phone use during attendance scan"</em></div>
+            <div class="audit-time">Today 09:48 AM</div>
+        </div>
+        <div class="audit-item">
+            <div class="audit-icon" style="background:rgba(34,211,238,.15);"><span style="color:var(--cyan);">🔄</span></div>
+            <div class="audit-text"><strong>Prof. Ahmed (HOD)</strong> reassigned CS-301 Section C to <strong>Mr. Kamran Akhtar</strong> · Reason: <em>"Faculty medical leave"</em></div>
+            <div class="audit-time">Today 08:30 AM</div>
+        </div>
+        <div class="audit-item">
+            <div class="audit-icon" style="background:rgba(16,185,129,.15);"><span style="color:var(--green);">🏠</span></div>
+            <div class="audit-text"><strong>Prof. Ahmed (HOD)</strong> transferred CS-205 Lab from Room 204 → Lab 3 · Reason: <em>"Projector issue"</em></div>
+            <div class="audit-time">Yesterday 02:15 PM</div>
+        </div>
+    </div>
+
+    <!-- Violations Table (from existing) -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3><i class="fas fa-list-alt" style="color:var(--red);"></i> Exam Violation Log</h3>
+            <a href="/api/violations/export" class="btn-export"><i class="fas fa-download"></i> Export CSV</a>
+        </div>
+        {% if violations %}
+        <div style="overflow-x:auto;">
+        <table>
+            <thead><tr><th>#</th><th>Timestamp</th><th>Student ID</th><th>Violation Type</th><th>Details</th><th>Severity</th></tr></thead>
+            <tbody>
+                {% for v in violations %}
+                <tr>
+                    <td style="color:var(--muted);">{{ loop.index }}</td>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;">{{ v.timestamp }}</td>
+                    <td style="font-weight:600;">{{ v.student_id or 'N/A' }}</td>
+                    <td style="font-weight:500;">{{ v.violation_type }}</td>
+                    <td style="color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ v.details or '—' }}</td>
+                    <td>
+                        {% if 'high' in (v.details or '').lower() or 'identity' in v.violation_type.lower() or 'object' in v.violation_type.lower() %}
+                            <span class="badge risk">High</span>
+                        {% elif 'behavior' in v.violation_type.lower() or 'gaze' in v.violation_type.lower() %}
+                            <span class="badge warn">Medium</span>
+                        {% else %}
+                            <span class="badge safe">Low</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="no-data"><i class="fas fa-shield-check" style="color:var(--green);"></i>No violations recorded</div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Student Registration System
+// ─────────────────────────────────────────────────────────────────────────────
+let registrationVideo = null;
+let registrationCanvas = null;
+let registrationCapture = null;
+
+function openRegisterCamera() {
+    if (registrationVideo) {
+        alert('Camera is already open');
+        return;
+    }
+    
+    // Create modal for camera
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    modal.innerHTML = `
+        <div style="position:relative;width:90%;max-width:500px;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;">
+            <h2 style="font-size:1.2rem;margin-bottom:16px;color:var(--text);">Capture Student Photo</h2>
+            <video id="regCameraVideo" autoplay style="width:100%;border-radius:8px;margin-bottom:16px;display:none;" playsinline></video>
+            <canvas id="regCameraCanvas" style="display:none;"></canvas>
+            <img id="regCapturedImg" style="width:100%;border-radius:8px;margin-bottom:16px;display:none;" />
+            <p id="cameraStatus" style="color:var(--muted);font-size:.85rem;margin-bottom:16px;">Initializing camera...</p>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <button id="captureBtn" onclick="captureStudentPhoto()" style="padding:10px 20px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--accent2);border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:none;">Capture</button>
+                <button id="retakeBtn" onclick="retakeCameraCapture()" style="padding:10px 20px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--yellow);border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:none;">Retake</button>
+                <button onclick="closeRegisterCamera()" style="flex:1;padding:10px 20px;background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);color:var(--red);border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    registrationVideo = document.getElementById('regCameraVideo');
+    registrationCanvas = document.getElementById('regCameraCanvas');
+    const statusEl = document.getElementById('cameraStatus');
+    const captureBtn = document.getElementById('captureBtn');
+    
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+        .then(stream => {
+            registrationVideo.srcObject = stream;
+            statusEl.textContent = 'Ready to capture!';
+            statusEl.style.color = 'var(--green)';
+            captureBtn.style.display = 'block';
+        })
+        .catch(err => {
+            statusEl.textContent = 'Camera access denied. Please allow camera permission.';
+            statusEl.style.color = 'var(--red)';
+            console.error('Camera error:', err);
+        });
+}
+
+function captureStudentPhoto() {
+    if (!registrationVideo || !registrationCanvas) return;
+    
+    registrationCanvas.width = registrationVideo.videoWidth;
+    registrationCanvas.height = registrationVideo.videoHeight;
+    
+    const ctx = registrationCanvas.getContext('2d');
+    ctx.drawImage(registrationVideo, 0, 0);
+    
+    const imageData = registrationCanvas.toDataURL('image/jpeg');
+    registrationCapture = imageData;
+    
+    const capturedImg = document.getElementById('regCapturedImg');
+    capturedImg.src = imageData;
+    capturedImg.style.display = 'block';
+    
+    registrationVideo.style.display = 'none';
+    document.getElementById('captureBtn').style.display = 'none';
+    document.getElementById('retakeBtn').style.display = 'block';
+    
+    // Show preview in the form - hide the text div and show image
+    const previewContainer = document.getElementById('reg-preview-container');
+    const previewDiv = previewContainer.querySelector('div');
+    if (previewDiv) previewDiv.style.display = 'none';
+    
+    const previewImg = document.getElementById('reg-preview');
+    previewImg.src = imageData;
+    previewImg.style.display = 'block';
+    
+    // Enable register button
+    document.getElementById('reg-submit').disabled = false;
+    document.getElementById('reg-submit').style.opacity = '1';
+    document.getElementById('reg-submit').style.cursor = 'pointer';
+    
+    // Show retake button in form
+    const formRetakeBtn = document.getElementById('retake-btn');
+    if (formRetakeBtn) formRetakeBtn.style.display = 'flex';
+}
+
+function closeRegisterCamera() {
+    if (registrationVideo && registrationVideo.srcObject) {
+        registrationVideo.srcObject.getTracks().forEach(track => track.stop());
+    }
+    registrationVideo = null;
+    registrationCanvas = null;
+    
+    const modal = document.querySelector('div[style*="position:fixed"][style*="z-index:9999"]');
+    if (modal) modal.remove();
+}
+
+function retakeCameraCapture() {
+    if (!registrationVideo) {
+        // Modal version - called from modal
+        registrationVideo = document.getElementById('regCameraVideo');
+        if (!registrationVideo) return;
+    }
+    
+    registrationVideo.style.display = 'block';
+    const capturedImg = document.getElementById('regCapturedImg');
+    if (capturedImg) capturedImg.style.display = 'none';
+    
+    const captureBtn = document.getElementById('captureBtn');
+    if (captureBtn) captureBtn.style.display = 'block';
+    
+    const retakeModalBtn = document.getElementById('retakeBtn');
+    if (retakeModalBtn) retakeModalBtn.style.display = 'none';
+    
+    // Also reset form preview
+    const formRetakeBtn = document.getElementById('retake-btn');
+    if (formRetakeBtn) formRetakeBtn.style.display = 'none';
+}
+
+function closeRegisterCamera() {
+    if (registrationVideo && registrationVideo.srcObject) {
+        registrationVideo.srcObject.getTracks().forEach(track => track.stop());
+    }
+    registrationVideo = null;
+    registrationCanvas = null;
+    
+    const modal = document.querySelector('[style*="position:fixed"]');
+    if (modal) modal.remove();
+}
+
+function submitStudentRegistration() {
+    const name = document.getElementById('reg-name').value.trim();
+    const roll = document.getElementById('reg-roll').value.trim();
+    
+    if (!name || !roll) {
+        showToast('Please fill in all fields', 'Name and roll number are required', 'error', 4000);
+        return;
+    }
+    
+    if (!registrationCapture) {
+        showToast('No photo captured', 'Please capture a photo before registering', 'error', 4000);
+        return;
+    }
+    
+    const btn = document.getElementById('reg-submit');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+    
+    fetch('/api/admin/register-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: name,
+            roll_number: roll,
+            image: registrationCapture
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Show success toast notification
+            showToast(
+                '✓ Registration Successful!',
+                `${data.student.name} (${data.student.roll_number}) has been registered with face embeddings.`,
+                'success',
+                5000
+            );
+            
+            // Clear form
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-roll').value = '';
+            document.getElementById('reg-preview').style.display = 'none';
+            const previewContainer = document.getElementById('reg-preview-container');
+            previewContainer.querySelector('div') ? previewContainer.querySelector('div').style.display='block' : previewContainer.innerHTML = '<div style="text-align:center;"><i class="fas fa-camera" style="font-size:2rem;margin-bottom:8px;display:block;"></i><span>No image captured yet</span></div>';
+            registrationCapture = null;
+            
+            // Reset button
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Register Student';
+            
+            // Auto-scroll to violations section
+            setTimeout(() => {
+                const violSection = Array.from(document.querySelectorAll('.table-header')).find(el => el.querySelector('i.fa-bell'));
+                if (violSection) violSection.scrollIntoView({ behavior: 'smooth' });
+            }, 1500);
+        } else {
+            // Show error toast notification
+            showToast(
+                '✗ Registration Failed',
+                data.message || 'An error occurred during registration',
+                'error',
+                5000
+            );
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Register Student';
+        }
+    })
+    .catch(err => {
+        showToast(
+            '✗ Network Error',
+            'Failed to connect to server: ' + err.message,
+            'error',
+            5000
+        );
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Register Student';
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Toast Notification System
+// ─────────────────────────────────────────────────────────────────────────────
+function showToast(title, message, type = 'info', duration = 4000) {
+    // Create toast container if not exists
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const iconMap = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'info': 'fa-info-circle'
+    };
+    
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas ${iconMap[type]}"></i>
+        </div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="this.closest('.toast').remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto remove after duration
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+function showRegStatus(msg, type) {
+    const el = document.getElementById('reg-status');
+    if (!msg) {
+        el.style.display = 'none';
+        return;
+    }
+    el.style.display = 'flex';
+    
+    const iconMap = {
+        'success': '<i class="fas fa-check-circle" style="color:var(--green)"></i>',
+        'error': '<i class="fas fa-exclamation-circle" style="color:var(--red)"></i>',
+        'info': '<i class="fas fa-spinner fa-spin" style="color:var(--accent2)"></i>'
+    };
+    
+    el.innerHTML = `${iconMap[type]}<span style="flex:1;">${msg}</span>`;
+    
+    if (type === 'success') {
+        el.style.background = 'rgba(16,185,129,.15)';
+        el.style.color = 'var(--green)';
+        el.style.border = '1px solid rgba(16,185,129,.3)';
+    } else if (type === 'error') {
+        el.style.background = 'rgba(244,63,94,.15)';
+        el.style.color = 'var(--red)';
+        el.style.border = '1px solid rgba(244,63,94,.3)';
+    } else {
+        el.style.background = 'rgba(99,102,241,.15)';
+        el.style.color = 'var(--accent2)';
+        el.style.border = '1px solid rgba(99,102,241,.3)';
+    }
+}
+
+function toggleRegisterPanel() {
+    const content = document.getElementById('register-panel-content');
+    const backBtn = document.getElementById('register-back-btn');
+    const mainContent = content.querySelector('div');
+    
+    if (mainContent.style.display === 'none') {
+        mainContent.style.display = 'block';
+        backBtn.style.display = 'none';
+    } else {
+        mainContent.style.display = 'none';
+        backBtn.style.display = 'block';
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Real-Time Violations WebSocket Connection
+// ─────────────────────────────────────────────────────────────────────────────
+const socket = io.connect(window.location.origin + '/supervision');
+let violationsList = [];
+
+socket.on('connect', function() {
+    console.log('[SOCKET] Connected to supervision namespace');
+    document.getElementById('violations-live-status').textContent = '● Live';
+    document.getElementById('violations-live-status').style.color = 'var(--green)';
+});
+
+socket.on('disconnect', function() {
+    console.log('[SOCKET] Disconnected from supervision namespace');
+    document.getElementById('violations-live-status').textContent = '● Disconnected';
+    document.getElementById('violations-live-status').style.color = 'var(--red)';
+});
+
+socket.on('new_alert', function(alert) {
+    console.log('[VIOLATION] New alert received:', alert);
+    addViolationToMonitor(alert);
+    updateKpiViolations();
+});
+
+function addViolationToMonitor(alert) {
+    violationsList.unshift(alert);
+    if (violationsList.length > 20) {
+        violationsList.pop(); // Keep only last 20
+    }
+    
+    renderViolationsMonitor();
+}
+
+function renderViolationsMonitor() {
+    const container = document.getElementById('violations-live-container');
+    const empty = document.getElementById('violations-empty');
+    
+    if (violationsList.length === 0) {
+        empty.style.display = 'block';
+        container.innerHTML = '<div class="no-data"><i class="fas fa-shield-check" style="color:var(--green);"></i>No violations detected. Exam under control.</div>';
+        return;
+    }
+    
+    empty.style.display = 'none';
+    
+    container.innerHTML = violationsList.map((v, idx) => {
+        const timestamp = new Date(v.timestamp).toLocaleTimeString();
+        const severityColor = v.severity === 'high' ? 'var(--red)' : v.severity === 'medium' ? 'var(--yellow)' : 'var(--cyan)';
+        const severityBg = v.severity === 'high' ? 'rgba(244,63,94,.15)' : v.severity === 'medium' ? 'rgba(245,158,11,.15)' : 'rgba(34,211,238,.15)';
+        const severityLabel = v.severity ? v.severity.charAt(0).toUpperCase() + v.severity.slice(1) : 'Info';
+        
+        return `
+            <div style="border-bottom:1px solid var(--border);padding:12px 16px;display:flex;gap:12px;align-items:flex-start;transition:.2s;cursor:pointer;" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background='transparent'">
+                <div style="width:8px;height:8px;background:${severityColor};border-radius:50%;margin-top:4px;flex-shrink:0;"></div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:.85rem;color:var(--text);margin-bottom:2px;">${v.type || 'Violation'}</div>
+                    <div style="font-size:.8rem;color:var(--muted);margin-bottom:4px;">${v.message || 'No details'}</div>
+                    <div style="font-size:.7rem;color:var(--muted);">Details: ${v.details || 'N/A'}</div>
+                </div>
+                <div style="font-size:.7rem;color:var(--muted);white-space:nowrap;text-align:right;flex-shrink:0;">
+                    <div style="margin-bottom:6px;">${timestamp}</div>
+                    <span style="background:${severityBg};color:${severityColor};padding:2px 8px;border-radius:6px;display:inline-block;">${severityLabel}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateKpiViolations() {
+    fetch('/api/stats')
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('kpi-today').textContent = d.today_violations ?? violationsList.length;
+        });
+}
+
+// Initial load of KPI
+fetch('/api/stats').then(r=>r.json()).then(d=>{
+    document.getElementById('kpi-today').textContent = d.today_violations ?? '0';
+}).catch(()=>{document.getElementById('kpi-today').textContent='0';});
+
+// Trend chart
+new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Today'],
+        datasets:[
+            {label:'CS Dept',data:[88,85,90,87,84,82,87],borderColor:'#6366f1',tension:.4,pointRadius:3},
+            {label:'EC Dept',data:[84,82,85,80,83,81,84],borderColor:'#22d3ee',tension:.4,pointRadius:3},
+            {label:'ME Dept',data:[78,76,80,75,77,74,78],borderColor:'#f59e0b',tension:.4,pointRadius:3},
+            {label:'CE Dept',data:[82,80,84,81,79,82,82],borderColor:'#10b981',tension:.4,pointRadius:3}
+        ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#94a3b8',font:{size:10},boxWidth:10,padding:8}}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#64748b',font:{size:10}}},y:{min:50,max:100,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#64748b',font:{size:10},callback:v=>v+'%'}}}}
+});
+
+// Types chart
+const violations = {{ violations | tojson }};
+const typeCounts = {};
+violations.forEach(v=>{const t=v.violation_type||'Other';typeCounts[t]=(typeCounts[t]||0)+1;});
+new Chart(document.getElementById('typesChart'),{
+    type:'doughnut',
+    data:{labels:Object.keys(typeCounts).length?Object.keys(typeCounts):['No Data'],datasets:[{data:Object.values(typeCounts).length?Object.values(typeCounts):[1],backgroundColor:['#f43f5e','#f59e0b','#6366f1','#10b981','#22d3ee'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},padding:10,boxWidth:10}}},cutout:'65%'}
+});
+
+// Modal Management Functions
+function openRegisterStudentModal() {
+    const modal = document.getElementById('student-registration-modal');
+    modal.style.display = 'flex';
+    modal.style.animation = 'fadeIn 0.3s ease-in';
+}
+
+function closeRegisterStudentModal() {
+    const modal = document.getElementById('student-registration-modal');
+    modal.style.animation = 'fadeOut 0.3s ease-out';
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+    resetRegistrationForm();
+}
+
+function resetRegistrationForm() {
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-roll').value = '';
+    document.getElementById('reg-preview').style.display = 'none';
+    document.getElementById('reg-feed-img').style.display = 'none';
+    document.getElementById('reg-submit').disabled = true;
+    document.getElementById('reg-submit').style.opacity = '0.5';
+    document.getElementById('reg-submit').style.cursor = 'not-allowed';
+    document.getElementById('retake-btn').style.display = 'none';
+    document.getElementById('camera-status').textContent = '● Ready';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('student-registration-modal');
+    if (event.target == modal) {
+        closeRegisterStudentModal();
+    }
+}
+</script>
+
+<!-- Student Registration Modal -->
+<div id="student-registration-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:10000;justify-content:center;align-items:center;padding:20px;flex-direction:column;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:900px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,.5);position:relative;">
+        <!-- Modal Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:24px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(16,185,129,.05));sticky:top;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <h2 style="margin:0;font-size:1.2rem;font-weight:700;"><i class="fas fa-user-plus" style="color:var(--accent2);font-size:1.1rem;"></i> Register New Student</h2>
+                <span style="font-size:.7rem;background:rgba(99,102,241,.2);color:var(--accent2);padding:4px 12px;border-radius:20px;font-weight:600;">Enroll Face Embeddings</span>
+            </div>
+            <button onclick="closeRegisterStudentModal()" style="background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);color:var(--red);width:36px;height:36px;border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:1rem;transition:.2s;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='rgba(244,63,94,.25)'" onmouseout="this.style.background='rgba(244,63,94,.15)'"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <!-- Modal Content -->
+        <div style="padding:28px;">
+            <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:28px;@media(max-width:1024px){grid-template-columns:1fr;gap:20px;}">
+                <!-- Form Section (Left) -->
+                <div style="padding:20px;background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.1);border-radius:12px;">
+                    <h4 style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:8px;"><i class="fas fa-form" style="color:var(--accent2);"></i> Student Details</h4>
+                    
+                    <div style="margin-bottom:18px;">
+                        <label style="display:block;font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Full Name <span style="color:var(--red);">*</span></label>
+                        <input type="text" id="reg-name" placeholder="e.g., Ali Hassan" style="width:100%;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:.2s;" />
+                        <small style="display:block;margin-top:4px;color:var(--muted);font-size:.75rem;">Enter your complete full name as per your ID</small>
+                    </div>
+
+                    <div style="margin-bottom:18px;">
+                        <label style="display:block;font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Roll Number <span style="color:var(--red);">*</span></label>
+                        <input type="text" id="reg-roll" placeholder="e.g., CS-042" style="width:100%;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:.2s;" />
+                        <small style="display:block;margin-top:4px;color:var(--muted);font-size:.75rem;">Your unique student identifier</small>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;"><i class="fas fa-image" style="color:var(--accent2);"></i> Captured Photo</label>
+                        <div style="width:100%;height:180px;background:rgba(255,255,255,.02);border:2px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem;position:relative;overflow:hidden;transition:.2s;" id="reg-preview-container">
+                            <div style="text-align:center;">
+                                <i class="fas fa-camera" style="font-size:2rem;margin-bottom:8px;display:block;"></i>
+                                <span>No image captured yet</span>
+                            </div>
+                            <img id="reg-preview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;" />
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                        <button onclick="openRegisterCamera()" style="padding:12px 16px;background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.3);color:var(--accent2);border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.background='rgba(99,102,241,.3)'" onmouseout="this.style.background='rgba(99,102,241,.2)'"><i class="fas fa-camera"></i> Capture Photo</button>
+                        <button onclick="retakeCameraCapture()" style="padding:12px 16px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--yellow);border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;" onmouseover="this.style.background='rgba(245,158,11,.25)'" onmouseout="this.style.background='rgba(245,158,11,.15)'" id="retake-btn" style="display:none;"><i class="fas fa-redo"></i> Retake Photo</button>
+                    </div>
+
+                    <button id="reg-submit" onclick="submitStudentRegistration()" style="width:100%;padding:14px 16px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--green);border-radius:8px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;font-size:.9rem;transition:.2s;opacity:0.5;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:8px;" disabled onmouseover="if(!this.disabled){this.style.background='rgba(16,185,129,.25)'}" onmouseout="if(!this.disabled){this.style.background='rgba(16,185,129,.15)'}" ><i class="fas fa-check-circle"></i> Register Student</button>
+                    
+                    <div id="reg-status" style="margin-top:16px;padding:12px;border-radius:8px;font-size:.8rem;display:none;display:flex;align-items:flex-start;gap:10px;"></div>
+                </div>
+
+                <!-- Camera Feed Section (Right) -->
+                <div>
+                    <h4 style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:8px;"><i class="fas fa-video" style="color:var(--green);"></i> Camera Preview</h4>
+                    
+                    <div style="position:relative;border:2px solid var(--border);border-radius:12px;overflow:hidden;background:rgba(0,0,0,.4);display:flex;flex-direction:column;height:100%;min-height:380px;">
+                        <div id="reg-camera-feed" style="flex:1;background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.9rem;position:relative;">
+                            <div style="text-align:center;">
+                                <i class="fas fa-cameraretro" style="font-size:2.5rem;margin-bottom:8px;display:block;"></i>
+                                <span>Camera preview will appear here</span>
+                            </div>
+                            <img id="reg-feed-img" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;" />
+                        </div>
+                        <div style="padding:14px;background:rgba(0,0,0,.6);text-align:center;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                            <div>
+                                <span id="camera-status">● Ready</span>
+                                <span style="margin-left:12px;color:var(--accent2);">📸</span>
+                            </div>
+                            <small style="opacity:.7;">Face should be clearly visible and centered</small>
+                        </div>
+                    </div>
+
+                    <!-- Tips Section -->
+                    <div style="margin-top:16px;padding:14px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:10px;">
+                        <h5 style="font-size:.8rem;font-weight:700;color:var(--accent2);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="fas fa-lightbulb"></i> Tips for Best Results</h5>
+                        <ul style="list-style:none;margin:0;padding:0;font-size:.75rem;color:var(--muted);">
+                            <li style="margin-bottom:6px;">✓ Ensure good lighting - face should be clearly visible</li>
+                            <li style="margin-bottom:6px;">✓ Position face directly to camera</li>
+                            <li style="margin-bottom:6px;">✓ Remove sunglasses or face covering</li>
+                            <li>✓ Only one person in frame</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Animations CSS -->
+<style>
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    #student-registration-modal { animation: fadeIn 0.3s ease-in; }
+</style>
+
+</script>
+</body>
+</html>

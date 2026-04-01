@@ -2,54 +2,326 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Eagle Eye</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — EagleEye Smart Campus</title>
+    <meta name="description" content="Sign in to EagleEye Smart Campus System">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        .login-container {
+        :root {
+            --bg: #0b0f1a;
+            --bg2: #111827;
+            --bg3: #1f2937;
+            --border: rgba(255,255,255,0.08);
+            --accent: #6366f1;
+            --accent2: #818cf8;
+            --green: #10b981;
+            --red: #f43f5e;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
+            align-items: flex-start;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            padding: 32px 16px;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
-        .login-form {
-            background-color: var(--bg-medium);
-            padding: 40px;
-            border-radius: 8px;
-            width: 350px;
+        body::before {
+            content: '';
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background:
+                linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+        /* Glow orb */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .login-wrapper {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 440px;
+        }
+
+        /* Back link */
+        .back-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 32px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--text); }
+
+        .login-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px 36px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity:0; transform: translateY(20px); }
+            to { opacity:1; transform: translateY(0); }
+        }
+
+        .login-header {
             text-align: center;
+            margin-bottom: 36px;
         }
-        .login-form h1 { color: var(--accent-primary); }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 5px; color: var(--text-secondary); }
-        .form-group input {
+        .login-logo {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            margin: 0 auto 16px;
+            box-shadow: 0 0 30px rgba(99,102,241,0.4);
+        }
+        .login-header h1 {
+            font-size: 1.5rem; font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .login-header p { font-size: 0.85rem; color: var(--muted); }
+
+        /* Role indicator */
+        .role-indicator {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 28px;
+            border: 1px solid;
+        }
+
+        /* Credentials hint */
+        .creds-hint {
+            background: rgba(99,102,241,0.08);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            font-size: 0.78rem;
+        }
+        .creds-hint .title {
+            color: var(--accent2);
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .creds-table {
+            display: grid; grid-template-columns: auto auto;
+            gap: 3px 16px;
+        }
+        .creds-table span { color: var(--muted); }
+        .creds-table code {
+            color: var(--text);
+            font-family: monospace;
+            font-size: 0.82rem;
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+        .input-wrapper {
+            position: relative;
+        }
+        .input-wrapper i {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: #475569; font-size: 0.9rem; pointer-events: none;
+        }
+        .input-wrapper input {
             width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-dark);
-            color: var(--text-primary);
-            box-sizing: border-box;
+            padding: 12px 14px 12px 40px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            outline: none;
         }
-        .error { color: var(--accent-red); margin-bottom: 15px; }
+        .input-wrapper input::placeholder { color: #475569; }
+        .input-wrapper input:focus {
+            border-color: var(--accent);
+            background: rgba(99,102,241,0.08);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        .toggle-pw {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; color: #475569;
+            transition: color 0.2s; font-size: 0.85rem;
+        }
+        .toggle-pw:hover { color: var(--muted); }
+
+        /* Error */
+        .alert-error {
+            background: rgba(244,63,94,0.1);
+            border: 1px solid rgba(244,63,94,0.3);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.83rem;
+            color: #fca5a5;
+            margin-bottom: 20px;
+        }
+        .alert-error i { flex-shrink: 0; }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.35);
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99,102,241,0.5);
+        }
+        .btn-login:active { transform: translateY(0); }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.78rem;
+            color: #475569;
+        }
+        .login-footer a { color: var(--accent2); text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <form class="login-form" method="POST">
-            <h1>🦅 Eagle Eye Login</h1>
-            {% if error %}
-                <p class="error">{{ error }}</p>
-            {% endif %}
+<div class="login-wrapper">
+    <a href="{{ url_for('index') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Portal
+    </a>
+
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">🦅</div>
+            <h1>Sign In to EagleEye</h1>
+            <p>AI-Powered Smart Campus System</p>
+        </div>
+
+        <!-- Role indicator (populated by JS based on ?role= param) -->
+        <div id="role-indicator" class="role-indicator" style="display:none;"></div>
+
+        <!-- Demo credentials hint -->
+        <div class="creds-hint">
+            <div class="title"><i class="fas fa-info-circle"></i> Demo Credentials</div>
+            <div class="creds-table">
+                <span>Admin:</span><code>admin / admin123</code>
+                <span>Invigilator:</span><code>invigilator / proctor123</code>
+                <span>Faculty:</span><code>faculty1 / faculty123</code>
+                <span>Student:</span><code>student1 / student123</code>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="alert-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <form method="POST" id="login-form">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+                <div class="input-wrapper">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+                </div>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+                    <i class="fas fa-eye toggle-pw" id="toggle-pw"></i>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            <button type="submit" class="btn-login" id="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Sign In
+            </button>
         </form>
+
+        <div class="login-footer">
+            <a href="{{ url_for('kiosk') }}">Skip login → Kiosk Mode</a>
+        </div>
     </div>
+</div>
+
+<script>
+    // Role color map
+    const roleMap = {
+        student:     { label: '🎓 Student Portal',     color: '#818cf8', bg: 'rgba(129,140,248,0.1)', border: 'rgba(129,140,248,0.3)' },
+        faculty:     { label: '📚 Faculty Portal',      color: '#22d3ee', bg: 'rgba(34,211,238,0.1)', border: 'rgba(34,211,238,0.3)'  },
+        admin:       { label: '🛡 Admin / HOD Portal',  color: '#10b981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.3)'  },
+        invigilator: { label: '👁 Proctor Mode',        color: '#f43f5e', bg: 'rgba(244,63,94,0.1)',  border: 'rgba(244,63,94,0.3)'   },
+    };
+
+    const role = new URLSearchParams(window.location.search).get('role');
+    if (role && roleMap[role]) {
+        const info = roleMap[role];
+        const el = document.getElementById('role-indicator');
+        el.style.display = 'flex';
+        el.style.color = info.color;
+        el.style.background = info.bg;
+        el.style.borderColor = info.border;
+        el.innerHTML = `<i class="fas fa-circle-dot" style="font-size:0.65rem;"></i> ${info.label}`;
+    }
+
+    // Password toggle
+    document.getElementById('toggle-pw').addEventListener('click', function() {
+        const pw = document.getElementById('password');
+        const isText = pw.type === 'text';
+        pw.type = isText ? 'password' : 'text';
+        this.className = `fas ${isText ? 'fa-eye' : 'fa-eye-slash'} toggle-pw`;
+    });
+
+    // Submit animation
+    document.getElementById('login-form').addEventListener('submit', function() {
+        const btn = document.getElementById('login-btn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+        btn.disabled = true;
+    });
+</script>
 </body>
 </html>

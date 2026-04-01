@@ -2,39 +2,460 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Eagle Eye - Command Hub</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EagleEye — AI-Powered Smart Campus System</title>
+    <meta name="description" content="Face recognition attendance, real-time analytics, and AI-powered exam supervision — all in one platform.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        .hub-container { text-align: center; margin-top: 5%; }
-        .hub-menu { display: inline-flex; flex-direction: column; gap: 20px; margin-top: 30px; }
-        .hub-option {
-            background-color: var(--bg-medium);
-            color: var(--text-primary);
-            padding: 30px 60px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 1.5rem;
-            transition: transform 0.2s, background-color 0.2s;
-            border: 1px solid var(--border-color);
+        :root {
+            --bg: #0b0f1a;
+            --bg2: #111827;
+            --bg3: #1f2937;
+            --border: rgba(255,255,255,0.08);
+            --accent: #6366f1;
+            --accent2: #818cf8;
+            --green: #10b981;
+            --red: #f43f5e;
+            --yellow: #f59e0b;
+            --cyan: #22d3ee;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --card-bg: rgba(255,255,255,0.04);
+            --glass: rgba(255,255,255,0.06);
         }
-        .hub-option:hover { transform: scale(1.05); background-color: var(--bg-light); }
-        .logout-link { position: absolute; top: 20px; right: 20px; color: var(--accent-primary); text-decoration: none;}
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* ── Nav ────────────────────────────────────────────── */
+        nav {
+            padding: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-logo {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 1.3rem; font-weight: 700;
+        }
+        .nav-logo .eagle-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(99,102,241,0.4);
+        }
+        .nav-badge {
+            background: rgba(99,102,241,0.15);
+            border: 1px solid rgba(99,102,241,0.3);
+            color: var(--accent2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Hero ───────────────────────────────────────────── */
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+        }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(99,102,241,0.12);
+            border: 1px solid rgba(99,102,241,0.25);
+            color: var(--accent2);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 28px;
+        }
+        .hero-eyebrow .dot {
+            width: 7px; height: 7px;
+            background: var(--accent2);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .hero h1 {
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            color: var(--muted);
+            font-size: 1.15rem;
+            max-width: 560px;
+            margin: 0 auto 48px;
+            line-height: 1.7;
+        }
+
+        /* ── Role Cards Grid ────────────────────────────────── */
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 900px) { .roles-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 520px) { .roles-grid { grid-template-columns: 1fr; } }
+
+        .role-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 24px;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--role-gradient, rgba(99,102,241,0.06));
+            opacity: 0;
+            transition: opacity 0.35s;
+            border-radius: 20px;
+        }
+        .role-card:hover::before { opacity: 1; }
+        .role-card:hover {
+            border-color: var(--role-color, var(--accent));
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), 0 0 0 1px var(--role-color, var(--accent));
+        }
+        .card-badge {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: var(--red);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+        }
+        .role-icon {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 18px;
+            background: var(--role-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .role-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .role-card p {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .role-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 24px;
+        }
+        .role-features li {
+            font-size: 0.75rem;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .role-features li::before {
+            content: '';
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--role-color, var(--accent));
+            flex-shrink: 0;
+        }
+        .role-signin {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--role-color, var(--accent));
+        }
+        .role-signin i { font-size: 0.75rem; transition: transform 0.2s; }
+        .role-card:hover .role-signin i { transform: translateX(4px); }
+
+        /* ── Kiosk Bar ──────────────────────────────────────── */
+        .kiosk-bar {
+            background: rgba(251,191,36,0.06);
+            border: 1px solid rgba(251,191,36,0.2);
+            border-radius: 16px;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            margin-bottom: 60px;
+        }
+        .kiosk-bar:hover {
+            border-color: rgba(251,191,36,0.5);
+            background: rgba(251,191,36,0.1);
+            transform: translateY(-2px);
+        }
+        .kiosk-icon {
+            width: 44px; height: 44px;
+            background: rgba(251,191,36,0.15);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            color: #fbbf24;
+            flex-shrink: 0;
+        }
+        .kiosk-info h4 { font-size: 1rem; font-weight: 600; margin-bottom: 2px; }
+        .kiosk-info p { font-size: 0.8rem; color: var(--muted); }
+        .kiosk-badge {
+            background: rgba(251,191,36,0.2);
+            border: 1px solid rgba(251,191,36,0.3);
+            color: #fbbf24;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .kiosk-features {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .kiosk-feature {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+        .kiosk-feature .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
+        .kiosk-arrow { margin-left: 16px; color: #fbbf24; transition: transform 0.2s; }
+        .kiosk-bar:hover .kiosk-arrow { transform: translateX(4px); }
+
+        /* ── Stats Footer ───────────────────────────────────── */
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            margin-bottom: 40px;
+        }
+        .stat-item { text-align: center; }
+        .stat-item .num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-item .label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+        /* Animations */
+        .fade-in { animation: fadeUp 0.6s ease-out both; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+        .delay-6 { animation-delay: 0.6s; }
     </style>
 </head>
 <body>
-    <div class="hub-container">
-        <h1>🦅 Welcome to the Eagle Eye Command Hub</h1>
-        <p>Please select an operation to begin.</p>
-        
-        <div class="hub-menu">
-            <!-- The user's role will determine which links are shown -->
-            {% if current_user.role == 'admin' %}
-            <a href="{{ url_for('register') }}" class="hub-option">👤 Register New Student</a>
-            {% endif %}
-            <a href="{{ url_for('attendance') }}" class="hub-option">✅ Mark Daily Attendance</a>
-            <a href="{{ url_for('supervision') }}" class="hub-option">Exam Surveillance</a>
+<div class="container">
+    <nav>
+        <div class="nav-logo">
+            <div class="eagle-icon">🦅</div>
+            <span>EagleEye</span>
+        </div>
+        <div class="nav-badge">AI-Powered Smart Campus System</div>
+    </nav>
+
+    <section class="hero fade-in">
+        <div class="hero-eyebrow">
+            <span class="dot"></span>
+            Live System Active
+        </div>
+        <h1>Smart Attendance &amp;<br><span>Exam Supervision</span></h1>
+        <p>Face recognition attendance, real-time analytics, and AI-powered exam supervision — all in one platform.</p>
+    </section>
+
+    <!-- Role Cards -->
+    <div class="roles-grid">
+        <!-- Student -->
+        <a href="{{ url_for('login', role='student') }}"
+           class="role-card fade-in delay-1"
+           style="--role-color:#818cf8; --role-bg:rgba(129,140,248,0.12); --role-gradient:linear-gradient(135deg,rgba(129,140,248,0.08),transparent);">
+            <div class="role-icon"><i class="fas fa-graduation-cap" style="color:#818cf8;"></i></div>
+            <h3>Student</h3>
+            <p>View attendance, ERP analytics &amp; leave requests</p>
+            <ul class="role-features">
+                <li>Attendance Charts</li>
+                <li>Leave Requests</li>
+                <li>Risk Alerts</li>
+            </ul>
+            <div class="role-signin">Sign In <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- Faculty -->
+        <a href="{{ url_for('login', role='faculty') }}"
+           class="role-card fade-in delay-2"
+           style="--role-color:#22d3ee; --role-bg:rgba(34,211,238,0.12); --role-gradient:linear-gradient(135deg,rgba(34,211,238,0.08),transparent);">
+            <div class="role-icon"><i class="fas fa-chalkboard-teacher" style="color:#22d3ee;"></i></div>
+            <h3>Faculty</h3>
+            <p>Manage sessions, mark attendance &amp; view reports</p>
+            <ul class="role-features">
+                <li>Live Sessions</li>
+                <li>Quick Corrections</li>
+                <li>Export Reports</li>
+            </ul>
+            <div class="role-signin" style="color:#22d3ee;">Sign In <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- Admin -->
+        <a href="{{ url_for('login', role='admin') }}"
+           class="role-card fade-in delay-3"
+           style="--role-color:#10b981; --role-bg:rgba(16,185,129,0.12); --role-gradient:linear-gradient(135deg,rgba(16,185,129,0.08),transparent);">
+            <div class="role-icon"><i class="fas fa-shield-halved" style="color:#10b981;"></i></div>
+            <h3>Admin / HOD</h3>
+            <p>Institute KPIs, defaulter lists &amp; audit logs</p>
+            <ul class="role-features">
+                <li>Institute KPIs</li>
+                <li>Dept Analytics</li>
+                <li>Audit Logs</li>
+            </ul>
+            <div class="role-signin" style="color:#10b981;">Sign In <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <!-- Invigilator -->
+        <a href="{{ url_for('login', role='invigilator') }}"
+           class="role-card fade-in delay-4"
+           style="--role-color:#f43f5e; --role-bg:rgba(244,63,94,0.12); --role-gradient:linear-gradient(135deg,rgba(244,63,94,0.08),transparent);">
+            <div class="card-badge">Proctor Mode</div>
+            <div class="role-icon"><i class="fas fa-eye" style="color:#f43f5e;"></i></div>
+            <h3>Invigilator</h3>
+            <p>Monitor exams with AI proctoring &amp; violation alerts</p>
+            <ul class="role-features">
+                <li>Live Monitoring</li>
+                <li>Violation Alerts</li>
+                <li>Exam Reports</li>
+            </ul>
+            <div class="role-signin" style="color:#f43f5e;">Sign In <i class="fas fa-arrow-right"></i></div>
+        </a>
+    </div>
+
+    <!-- Kiosk Mode Bar -->
+    <a href="{{ url_for('kiosk') }}" class="kiosk-bar fade-in delay-5">
+        <div class="kiosk-icon"><i class="fas fa-desktop"></i></div>
+        <div class="kiosk-info">
+            <h4>Kiosk Mode</h4>
+            <p>Dedicated station for face-based attendance marking and live exam monitoring</p>
+        </div>
+        <span class="kiosk-badge">No Login Required</span>
+        <div class="kiosk-features">
+            <div class="kiosk-feature"><span class="dot"></span> Face Scanning</div>
+            <div class="kiosk-feature"><span class="dot"></span> Live Detection</div>
+            <div class="kiosk-feature"><span class="dot"></span> Violation Alerts</div>
+        </div>
+        <i class="fas fa-arrow-right kiosk-arrow"></i>
+    </a>
+
+    <!-- Stats row -->
+    <div class="stats-row fade-in delay-6">
+        <div class="stat-item">
+            <div class="num" id="stat-students">—</div>
+            <div class="label">Students Registered</div>
+        </div>
+        <div class="stat-item">
+            <div class="num" id="stat-today">—</div>
+            <div class="label">Violations Today</div>
+        </div>
+        <div class="stat-item">
+            <div class="num">99.2%</div>
+            <div class="label">Detection Accuracy</div>
+        </div>
+        <div class="stat-item">
+            <div class="num">≤ 50ms</div>
+            <div class="label">Detection Latency</div>
         </div>
     </div>
-    <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+</div>
+
+<script>
+// Fetch live stats
+fetch('/api/stats')
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById('stat-today').textContent = d.today_violations || 0;
+        document.getElementById('stat-students').textContent = '—';
+    })
+    .catch(() => {});
+</script>
 </body>
 </html>

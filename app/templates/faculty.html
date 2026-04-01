@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Portal — EagleEye</title>
+    <meta name="description" content="Faculty attendance management with session control, quick corrections, defaulter tracking, and class actions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root{--bg:#0b0f1a;--bg2:#111827;--border:rgba(255,255,255,.08);--accent:#22d3ee;--accent2:#818cf8;--green:#10b981;--red:#f43f5e;--yellow:#f59e0b;--cyan:#22d3ee;--text:#f1f5f9;--muted:#94a3b8;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+        .topbar{height:60px;background:rgba(17,24,39,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100;}
+        .topbar-brand{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:700;text-decoration:none;color:var(--text);}
+        .brand-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#0891b2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+        .topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+        .nav-user{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);}
+        .avatar{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),#0891b2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;}
+        .btn-action{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:.8rem;font-family:'Inter',sans-serif;text-decoration:none;display:flex;align-items:center;gap:6px;transition:.2s;}
+        .btn-action:hover{color:var(--text);}
+        .page{max-width:1280px;margin:0 auto;padding:28px 24px;}
+        .welcome{margin-bottom:24px;}
+        .welcome h1{font-size:1.5rem;font-weight:800;margin-bottom:4px;}
+        .welcome p{font-size:.85rem;color:var(--muted);}
+
+        /* Timetable auto-start sessions */
+        .session-row{background:linear-gradient(135deg,rgba(34,211,238,.1),rgba(99,102,241,.06));border:1px solid rgba(34,211,238,.2);border-radius:14px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+        .session-row .info h3{font-size:.95rem;font-weight:700;}
+        .session-row .info p{font-size:.78rem;color:var(--muted);}
+        .session-row .timer{font-size:1.5rem;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums;}
+        .session-row .btns{display:flex;gap:8px;flex-wrap:wrap;}
+        .btn-sm{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:.78rem;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;transition:.2s;}
+        .btn-sm:hover{color:var(--text);}
+        .btn-primary{background:var(--accent);border:none;color:#000;font-weight:600;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px;transition:.2s;}
+        .btn-primary:hover{background:#67e8f9;}
+        .btn-danger{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.3);color:var(--red);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:.78rem;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;transition:.2s;}
+        .btn-danger:hover{background:rgba(244,63,94,.2);}
+
+        /* KPI strip */
+        .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+        @media(max-width:900px){.kpi-strip{grid-template-columns:repeat(3,1fr);}}
+        @media(max-width:500px){.kpi-strip{grid-template-columns:repeat(2,1fr);}}
+        .kpi{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:18px;transition:.3s;}
+        .kpi:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px);}
+        .kpi-label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+        .kpi-val{font-size:1.8rem;font-weight:800;}
+        .kpi-sub{font-size:.7rem;color:var(--muted);margin-top:3px;}
+
+        /* Cards */
+        .card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px;}
+        .card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+        .card-header h3{font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:7px;}
+        .card-header h3 i{color:var(--accent);}
+        .card-body{padding:16px 18px;}
+
+        /* Timetable grid */
+        .timetable{width:100%;border-collapse:collapse;}
+        .timetable th{padding:10px 14px;text-align:left;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
+        .timetable td{padding:12px 14px;font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .timetable tr:hover td{background:rgba(255,255,255,.02);}
+        .badge{padding:2px 8px;border-radius:6px;font-size:.65rem;font-weight:700;}
+        .badge.active{background:rgba(16,185,129,.15);color:var(--green);}
+        .badge.done{background:rgba(100,116,139,.15);color:var(--muted);}
+        .badge.upcoming{background:rgba(129,140,248,.15);color:var(--accent2);}
+        .badge.holiday{background:rgba(245,158,11,.15);color:var(--yellow);}
+
+        /* Defaulter list */
+        .defaulter-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+        .defaulter-item:last-child{border-bottom:none;}
+        .def-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--red),#e11d48);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;flex-shrink:0;}
+        .def-info{flex:1;}
+        .def-name{font-size:.85rem;font-weight:600;}
+        .def-meta{font-size:.7rem;color:var(--muted);}
+        .def-pct{font-size:.9rem;font-weight:800;color:var(--red);}
+
+        /* Quick actions grid */
+        .actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+        @media(max-width:800px){.actions-grid{grid-template-columns:repeat(2,1fr);}}
+        .action-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:20px;text-decoration:none;color:var(--text);transition:.3s;display:block;cursor:pointer;}
+        .action-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3);}
+        .ac-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:12px;}
+        .ac-title{font-size:.92rem;font-weight:700;margin-bottom:4px;}
+        .ac-desc{font-size:.75rem;color:var(--muted);}
+
+        /* Correction modal */
+        .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;}
+        .modal-bg.open{display:flex;}
+        .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:min(440px,92vw);animation:modalIn .25s ease-out;}
+        @keyframes modalIn{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:scale(1);}}
+        .modal h3{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+        .form-group{margin-bottom:12px;}
+        .form-group label{font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;}
+        .form-control{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.82rem;font-family:'Inter',sans-serif;outline:none;transition:.2s;}
+        .form-control:focus{border-color:var(--accent);}
+        select.form-control{background:var(--bg2);}
+        .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+
+        /* Toast */
+        #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(16,185,129,.95);color:#fff;padding:14px 24px;border-radius:12px;font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:10px;transition:transform .4s cubic-bezier(.34,1.56,.64,1);z-index:999;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+        #toast.show{transform:translateX(-50%) translateY(0);}
+
+        /* Charts */
+        .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+        @media(max-width:800px){.charts-row{grid-template-columns:1fr;}}
+        .chart-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:18px;}
+        .chart-card h4{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+        .chart-card h4 i{color:var(--accent);}
+        .chart-wrap{height:180px;position:relative;}
+    </style>
+</head>
+<body>
+<div id="toast"><i class="fas fa-check-circle"></i><span id="toast-msg">Done!</span></div>
+
+<nav class="topbar">
+    <a href="{{ url_for('hub') }}" class="topbar-brand">
+        <div class="brand-icon">📚</div>
+        EagleEye — Faculty Portal
+    </a>
+    <div class="topbar-right">
+        <div class="nav-user">
+            <div class="avatar">{{ current_user.username[0].upper() }}</div>
+            <span>{{ current_user.name }}</span>
+        </div>
+        <a href="{{ url_for('hub') }}" class="btn-action"><i class="fas fa-home"></i> Hub</a>
+        <a href="{{ url_for('logout') }}" class="btn-action" style="color:var(--red);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</nav>
+<div class="page">
+    <div class="welcome">
+        <h1>Faculty Dashboard 📚</h1>
+        <p>{{ current_user.name }} · {{ current_user.department }}</p>
+    </div>
+
+    <!-- Current Session (auto-started from timetable) -->
+    <div class="session-row" id="session-banner">
+        <div class="info">
+            <h3>🟢 CS-301 · Data Structures · Section B</h3>
+            <p>Room 204 · Auto-started from timetable · <span id="session-date"></span></p>
+        </div>
+        <div class="timer" id="session-timer">00:00</div>
+        <div class="btns">
+            <a href="{{ url_for('attendance') }}" class="btn-primary"><i class="fas fa-camera"></i> Open Live View</a>
+            <button class="btn-sm" onclick="openModal('correct-modal')"><i class="fas fa-edit"></i> Quick Correct</button>
+            <button class="btn-danger" onclick="endSession()"><i class="fas fa-stop"></i> End</button>
+        </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip">
+        <div class="kpi">
+            <div class="kpi-label">Present Now</div>
+            <div class="kpi-val" style="color:var(--green);">24</div>
+            <div class="kpi-sub">of 30 enrolled</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Absent</div>
+            <div class="kpi-val" style="color:var(--red);">4</div>
+            <div class="kpi-sub">+2 disciplinary</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Disciplinary</div>
+            <div class="kpi-val" style="color:var(--yellow);">2</div>
+            <div class="kpi-sub">Notified ✓</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Defaulters (&gt;5)</div>
+            <div class="kpi-val" style="color:var(--red);">3</div>
+            <div class="kpi-sub">Below 75% threshold</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Sessions Today</div>
+            <div class="kpi-val" style="color:var(--accent);">2/4</div>
+            <div class="kpi-sub">Next: 11:30 AM</div>
+        </div>
+    </div>
+
+    <!-- Quick Actions (< 30 sec per class) -->
+    <div class="actions-grid">
+        <a href="{{ url_for('attendance') }}" class="action-card">
+            <div class="ac-icon" style="background:rgba(16,185,129,.15);">📷</div>
+            <div class="ac-title">Live Attendance</div>
+            <div class="ac-desc">Start face-recognition session</div>
+        </a>
+        <div class="action-card" onclick="openModal('correct-modal')">
+            <div class="ac-icon" style="background:rgba(129,140,248,.15);">✏️</div>
+            <div class="ac-title">Quick Correction</div>
+            <div class="ac-desc">Current/last class only, audited</div>
+        </div>
+        <div class="action-card" onclick="openModal('sub-modal')">
+            <div class="ac-icon" style="background:rgba(34,211,238,.15);">🔄</div>
+            <div class="ac-title">Substitute / Transfer</div>
+            <div class="ac-desc">One-click faculty swap or room change</div>
+        </div>
+        <a href="/api/attendance/export" class="action-card">
+            <div class="ac-icon" style="background:rgba(245,158,11,.15);">📊</div>
+            <div class="ac-title">Export Reports</div>
+            <div class="ac-desc">Download CSV / Excel attendance</div>
+        </a>
+    </div>
+
+    <!-- Today's Timetable -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-calendar-day"></i> Today's Timetable</h3>
+            <button class="btn-sm" onclick="openModal('holiday-modal')"><i class="fas fa-calendar-times"></i> Mark Holiday</button>
+        </div>
+        <div style="overflow-x:auto;">
+        <table class="timetable">
+            <thead><tr><th>Time</th><th>Subject</th><th>Section</th><th>Room</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--muted);">08:30 – 09:30</td>
+                    <td style="font-weight:600;">CS-301 Data Structures</td>
+                    <td>B</td><td>204</td>
+                    <td><span class="badge done">Completed</span></td>
+                    <td><button class="btn-sm" onclick="openModal('correct-modal')">Correct</button></td>
+                </tr>
+                <tr style="background:rgba(34,211,238,.04);">
+                    <td style="font-variant-numeric:tabular-nums;color:var(--cyan);font-weight:600;">09:45 – 10:45</td>
+                    <td style="font-weight:600;">CS-301 Data Structures</td>
+                    <td>A</td><td>204</td>
+                    <td><span class="badge active">🟢 Active</span></td>
+                    <td><a href="{{ url_for('attendance') }}" class="btn-sm" style="color:var(--green);">View Live</a></td>
+                </tr>
+                <tr>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--muted);">11:30 – 12:30</td>
+                    <td style="font-weight:600;">CS-205 Algorithm Design</td>
+                    <td>B</td><td>Lab 3</td>
+                    <td><span class="badge upcoming">Upcoming</span></td>
+                    <td><button class="btn-sm" onclick="showToast('Session will auto-start at 11:30')">Confirm</button></td>
+                </tr>
+                <tr>
+                    <td style="font-variant-numeric:tabular-nums;color:var(--muted);">14:00 – 15:00</td>
+                    <td style="font-weight:600;">CS-301 Data Structures</td>
+                    <td>C</td><td>205</td>
+                    <td><span class="badge upcoming">Upcoming</span></td>
+                    <td><button class="btn-sm" onclick="showToast('Session will auto-start at 14:00')">Confirm</button></td>
+                </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Charts: Class trend + Defaulter breakdown -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <h4><i class="fas fa-chart-line"></i> Class Attendance Trend (This Month)</h4>
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <h4><i class="fas fa-chart-pie"></i> Absence Breakdown</h4>
+            <div class="chart-wrap"><canvas id="absenceChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Defaulter List (>5 absences) -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-exclamation-triangle" style="color:var(--red);"></i> Defaulter List (>5 Absences — Need Attention)</h3>
+            <span style="font-size:.72rem;color:var(--red);font-weight:600;">3 students</span>
+        </div>
+        <div class="card-body">
+            <div class="defaulter-item">
+                <div class="def-avatar">ZA</div>
+                <div class="def-info"><div class="def-name">Zara Ahmed <span style="font-size:.7rem;color:var(--muted);">CS-042</span></div><div class="def-meta">8 absences · 2 disciplinary · Last: Mar 28</div></div>
+                <div class="def-pct">68%</div>
+            </div>
+            <div class="defaulter-item">
+                <div class="def-avatar">BR</div>
+                <div class="def-info"><div class="def-name">Bilal Raza <span style="font-size:.7rem;color:var(--muted);">CS-043</span></div><div class="def-meta">6 absences · 1 disciplinary · Last: Mar 29</div></div>
+                <div class="def-pct">72%</div>
+            </div>
+            <div class="defaulter-item">
+                <div class="def-avatar">SM</div>
+                <div class="def-info"><div class="def-name">Sana Malik <span style="font-size:.7rem;color:var(--muted);">CS-044</span></div><div class="def-meta">7 absences · 0 disciplinary · Last: Mar 27</div></div>
+                <div class="def-pct">70%</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Correction Modal -->
+<div class="modal-bg" id="correct-modal">
+    <div class="modal">
+        <h3><i class="fas fa-edit" style="color:var(--accent);"></i> Quick Correction</h3>
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px;">Only current/last class. All edits are audit-logged with reason & timestamp.</p>
+        <div class="form-group"><label>Student ID</label><input type="text" class="form-control" id="corr-id" placeholder="e.g. CS-042"></div>
+        <div class="form-group"><label>New Status</label><select class="form-control" id="corr-status"><option>Present</option><option>Absent</option><option>Disciplinary Absent</option></select></div>
+        <div class="form-group"><label>Reason (required for audit)</label><input type="text" class="form-control" id="corr-reason" placeholder="e.g. Came late, marked after class"></div>
+        <div class="modal-footer">
+            <button class="btn-sm" onclick="closeModal('correct-modal')">Cancel</button>
+            <button class="btn-primary" onclick="submitCorrection()"><i class="fas fa-check"></i> Apply</button>
+        </div>
+    </div>
+</div>
+
+<!-- Substitute Modal -->
+<div class="modal-bg" id="sub-modal">
+    <div class="modal">
+        <h3><i class="fas fa-user-plus" style="color:var(--accent);"></i> Substitute / Transfer</h3>
+        <div class="form-group"><label>Action</label>
+            <select class="form-control" id="sub-action">
+                <option>Assign Substitute Faculty</option>
+                <option>Transfer to Different Room</option>
+                <option>Cancel Class</option>
+                <option>Mark as Make-up Class</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Faculty / Room</label><input type="text" class="form-control" placeholder="e.g. Dr. Amna Siddiqui or Room 301"></div>
+        <div class="form-group"><label>Reason</label><input type="text" class="form-control" placeholder="e.g. Medical leave"></div>
+        <div class="modal-footer">
+            <button class="btn-sm" onclick="closeModal('sub-modal')">Cancel</button>
+            <button class="btn-primary" onclick="closeModal('sub-modal');showToast('Action applied! Change logged.')"><i class="fas fa-check"></i> Apply</button>
+        </div>
+    </div>
+</div>
+
+<!-- Holiday Modal -->
+<div class="modal-bg" id="holiday-modal">
+    <div class="modal">
+        <h3><i class="fas fa-calendar-times" style="color:var(--yellow);"></i> Mark Holiday / Off Day</h3>
+        <div class="form-group"><label>Date</label><input type="date" class="form-control"></div>
+        <div class="form-group"><label>Reason</label><input type="text" class="form-control" placeholder="e.g. National holiday, University event"></div>
+        <div class="modal-footer">
+            <button class="btn-sm" onclick="closeModal('holiday-modal')">Cancel</button>
+            <button class="btn-primary" onclick="closeModal('holiday-modal');showToast('Holiday marked. Timetable updated.')"><i class="fas fa-check"></i> Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Session timer
+document.getElementById('session-date').textContent = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+const start = Date.now();
+setInterval(()=>{
+    const e=Math.floor((Date.now()-start)/1000);
+    document.getElementById('session-timer').textContent=
+        `${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
+},1000);
+
+function endSession(){
+    if(!confirm('End session and finalize attendance?'))return;
+    document.getElementById('session-banner').style.background='rgba(100,116,139,.1)';
+    document.getElementById('session-banner').querySelector('.info h3').textContent='⬜ Session Ended — CS-301 Data Structures';
+    showToast('Session ended. Attendance finalized.');
+}
+
+// Charts
+new Chart(document.getElementById('trendChart'),{
+    type:'line',
+    data:{labels:['Mar 1','Mar 5','Mar 10','Mar 15','Mar 20','Mar 25','Mar 30'],
+        datasets:[{label:'Attendance %',data:[88,90,85,92,87,90,80],borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.05)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#22d3ee'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#64748b',font:{size:10}}},y:{min:50,max:100,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#64748b',font:{size:10},callback:v=>v+'%'}}}}
+});
+new Chart(document.getElementById('absenceChart'),{
+    type:'doughnut',
+    data:{labels:['Regular Absences','Disciplinary','Medical Leaves','Other'],datasets:[{data:[12,4,3,2],backgroundColor:['#f43f5e','#f59e0b','#22d3ee','#6366f1'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:10},padding:8,boxWidth:10}}},cutout:'60%'}
+});
+
+// Modals
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('open');}));
+
+function submitCorrection(){
+    const id=document.getElementById('corr-id').value.trim();
+    const reason=document.getElementById('corr-reason').value.trim();
+    if(!id||!reason){alert('Student ID and reason are required.');return;}
+    closeModal('correct-modal');
+    showToast(`Correction applied for ${id}. Audit logged.`);
+}
+
+function showToast(msg){
+    const t=document.getElementById('toast');
+    document.getElementById('toast-msg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
