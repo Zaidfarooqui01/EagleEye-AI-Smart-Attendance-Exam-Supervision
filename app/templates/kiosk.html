@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Mode — EagleEye Attendance Station</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #060a12;
+            --bg2: #0f1623;
+            --border: rgba(255,255,255,0.07);
+            --accent: #6366f1;
+            --green: #10b981;
+            --yellow: #fbbf24;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .kiosk-header {
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg2);
+            flex-shrink: 0;
+        }
+        .kiosk-brand {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .brand-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--yellow), #f97316);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .brand-text h1 { font-size: 1.1rem; font-weight: 700; }
+        .brand-text p { font-size: 0.78rem; color: var(--muted); }
+        .kiosk-badge {
+            background: rgba(251,191,36,0.12);
+            border: 1px solid rgba(251,191,36,0.3);
+            color: var(--yellow);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .kiosk-time {
+            font-size: 1.1rem; font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .back-portal {
+            font-size: 0.78rem; color: var(--muted);
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            transition: color 0.2s;
+        }
+        .back-portal:hover { color: var(--text); }
+
+        /* Main */
+        .kiosk-main {
+            flex: 1; display: grid;
+            grid-template-columns: 1fr 320px;
+            overflow: hidden;
+        }
+
+        /* Video */
+        .kiosk-video-area {
+            position: relative;
+            background: #02040a;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #kiosk-feed {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        .kiosk-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+            color: var(--muted);
+        }
+        .kiosk-placeholder .scan-ring {
+            width: 120px; height: 120px;
+            border: 3px solid rgba(251,191,36,0.3);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem;
+            position: relative;
+        }
+        .scan-ring::before {
+            content: '';
+            position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
+            border: 3px solid transparent;
+            border-top-color: var(--yellow);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .kiosk-placeholder h2 { font-size: 1.2rem; font-weight: 600; color: var(--text); }
+        .kiosk-placeholder p { font-size: 0.85rem; }
+
+        /* Scan borders */
+        .scan-corner {
+            position: absolute;
+            width: 28px; height: 28px;
+            border-color: var(--yellow);
+            border-style: solid;
+            opacity: 0.6;
+        }
+        .sc-tl { top: 20px; left: 20px; border-width: 3px 0 0 3px; }
+        .sc-tr { top: 20px; right: 20px; border-width: 3px 3px 0 0; }
+        .sc-bl { bottom: 20px; left: 20px; border-width: 0 0 3px 3px; }
+        .sc-br { bottom: 20px; right: 20px; border-width: 0 3px 3px 0; }
+
+        /* Detection flash */
+        .detection-flash {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 4px solid var(--green);
+            border-radius: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s;
+        }
+        .detection-flash.show { opacity: 1; }
+
+        /* Sidebar */
+        .kiosk-sidebar {
+            border-left: 1px solid var(--border);
+            background: var(--bg2);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+
+        .detection-result {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            min-height: 160px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .result-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .result-name {
+            font-size: 1.1rem; font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .result-sub { font-size: 0.8rem; color: var(--muted); }
+        .result-status {
+            margin-top: 12px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .status-marked {
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: var(--green);
+        }
+        .status-waiting {
+            background: rgba(251,191,36,0.1);
+            border: 1px solid rgba(251,191,36,0.2);
+            color: var(--yellow);
+        }
+        .status-unknown {
+            background: rgba(244,63,94,0.1);
+            border: 1px solid rgba(244,63,94,0.2);
+            color: #f43f5e;
+        }
+
+        /* Recent log in sidebar */
+        .sidebar-scroll {
+            flex: 1; overflow-y: auto; padding: 12px 16px;
+        }
+        .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #1e293b; }
+        .sidebar-title {
+            font-size: 0.72rem; font-weight: 700;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.06em; margin-bottom: 12px;
+        }
+        .mini-log-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 10px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+        .mini-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; color: white;
+            flex-shrink: 0;
+        }
+        .mini-name { font-size: 0.8rem; font-weight: 600; }
+        .mini-time { font-size: 0.68rem; color: var(--muted); margin-left: auto; }
+
+        /* Counter */
+        .kiosk-counter {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .counter-label { font-size: 0.75rem; color: var(--muted); }
+        .counter-val { font-size: 1.5rem; font-weight: 800; color: var(--green); }
+    </style>
+</head>
+<body>
+<header class="kiosk-header">
+    <div class="kiosk-brand">
+        <div class="brand-icon">🖥</div>
+        <div class="brand-text">
+            <h1>EagleEye Kiosk Station</h1>
+            <p>AI-powered face attendance — no login required</p>
+        </div>
+    </div>
+    <span class="kiosk-badge">🟢 No Login Required</span>
+    <div class="kiosk-time" id="kiosk-time">--:--:--</div>
+    <a href="/portal" class="back-portal"><i class="fas fa-arrow-left"></i> Back to Portal</a>
+</header>
+
+<div class="kiosk-main">
+    <!-- Video Area -->
+    <div class="kiosk-video-area" id="video-area">
+        <img id="kiosk-feed" alt="Kiosk face scan feed">
+        <div class="kiosk-placeholder" id="kiosk-placeholder">
+            <div class="scan-ring">🙂</div>
+            <h2>Stand in front of camera</h2>
+            <p>Face recognition will mark your attendance automatically</p>
+        </div>
+        <div class="scan-corner sc-tl"></div>
+        <div class="scan-corner sc-tr"></div>
+        <div class="scan-corner sc-bl"></div>
+        <div class="scan-corner sc-br"></div>
+        <div class="detection-flash" id="detect-flash"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="kiosk-sidebar">
+        <!-- Live detection result -->
+        <div class="detection-result" id="detection-result">
+            <div class="result-icon">👤</div>
+            <div class="result-name" id="result-name">Looking for faces...</div>
+            <div class="result-sub" id="result-sub">Please look at the camera</div>
+            <div class="result-status status-waiting" id="result-status">
+                <i class="fas fa-clock"></i> Waiting
+            </div>
+        </div>
+
+        <!-- Recent attendance -->
+        <div class="sidebar-scroll">
+            <div class="sidebar-title"><i class="fas fa-list-check"></i> Recently Marked</div>
+            <div id="mini-log">
+                <div style="text-align:center; color:#475569; font-size:0.78rem; padding:20px 0;">
+                    No scans yet today
+                </div>
+            </div>
+        </div>
+
+        <div class="kiosk-counter">
+            <div class="counter-label"><i class="fas fa-users"></i> Marked Today</div>
+            <div class="counter-val" id="kiosk-count">0</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const feed          = document.getElementById('kiosk-feed');
+    const placeholder   = document.getElementById('kiosk-placeholder');
+    const resultName    = document.getElementById('result-name');
+    const resultSub     = document.getElementById('result-sub');
+    const resultStatus  = document.getElementById('result-status');
+    const miniLog       = document.getElementById('mini-log');
+    const countEl       = document.getElementById('kiosk-count');
+    const detectFlash   = document.getElementById('detect-flash');
+    let count = 0;
+    let firstFrame = true;
+
+    // Use attendance namespace for kiosk (same logic, no auth)
+    const socket = io('/attendance', { transports: ['websocket', 'polling'] });
+
+    socket.on('video_frame', (data) => {
+        if (firstFrame) {
+            placeholder.style.display = 'none';
+            feed.style.display = 'block';
+            firstFrame = false;
+        }
+        feed.src = `data:image/jpeg;base64,${data.image}`;
+    });
+
+    socket.on('attendance_update', (data) => {
+        // Flash border
+        detectFlash.classList.add('show');
+        setTimeout(() => detectFlash.classList.remove('show'), 800);
+
+        // Update detection result panel
+        const initials = data.name ? data.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() : '?';
+        resultName.textContent = data.name || 'Student';
+        resultSub.textContent = `ID: ${data.roll_number || 'N/A'}`;
+        resultStatus.className = 'result-status status-marked';
+        resultStatus.innerHTML = '<i class="fas fa-check-circle"></i> Attendance Marked!';
+
+        // Reset after 3s
+        setTimeout(() => {
+            resultName.textContent = 'Looking for faces...';
+            resultSub.textContent = 'Please look at the camera';
+            resultStatus.className = 'result-status status-waiting';
+            resultStatus.innerHTML = '<i class="fas fa-clock"></i> Waiting';
+        }, 3000);
+
+        // Add to mini log
+        const noScans = miniLog.querySelector('div[style]');
+        if (noScans) noScans.remove();
+
+        count++;
+        countEl.textContent = count;
+
+        const item = document.createElement('div');
+        item.className = 'mini-log-item';
+        item.innerHTML = `
+            <div class="mini-avatar">${initials}</div>
+            <div>
+                <div class="mini-name">${data.name}</div>
+                <div style="font-size:0.68rem;color:#64748b;">${data.roll_number || ''}</div>
+            </div>
+            <div class="mini-time">${data.timestamp}</div>
+        `;
+        miniLog.prepend(item);
+    });
+
+    // Clock
+    setInterval(() => {
+        document.getElementById('kiosk-time').textContent =
+            new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+    }, 1000);
+});
+</script>
+</body>
+</html>
