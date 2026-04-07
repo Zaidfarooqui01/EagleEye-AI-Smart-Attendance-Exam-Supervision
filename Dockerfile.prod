@@ -1,0 +1,69 @@
+# Production Dockerfile for Eagle Eye AI Supervision System
+# Uses Gunicorn + Eventlet for production-grade SocketIO deployment
+
+FROM python:3.10-slim as builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    libopencv-dev \
+    python3-dev \
+    libsndfile1 \
+    portaudio19-dev \
+    libportaudio2 \
+    alsa-lib \
+    alsa-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --user --no-cache-dir gunicorn eventlet
+
+# Production image
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libopencv-core4.5 \
+    libopencv-imgproc4.5 \
+    libopencv-highgui4.5 \
+    libsndfile1 \
+    portaudio19-dev \
+    libportaudio2 \
+    alsa-lib \
+    alsa-utils \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /root/.local /root/.local
+
+ENV PATH=/root/.local/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+COPY . .
+
+RUN mkdir -p /app/logs \
+    && mkdir -p /app/outputs/attendance_reports \
+    && mkdir -p /app/outputs/supervision_reports/violation_snapshots \
+    && mkdir -p /app/data/face_encodings \
+    && mkdir -p /app/data/student_images
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5000 || exit 1
+
+# Run with Gunicorn + Eventlet for production
+CMD ["gunicorn", \
+     "--worker-class", "eventlet", \
+     "--workers", "1", \
+     "--bind", "0.0.0.0:5000", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--timeout", "120", \
+     "app.dashboard:app"]

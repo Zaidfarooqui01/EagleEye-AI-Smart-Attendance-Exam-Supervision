@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  eagleeye:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eagleeye-app
+    ports:
+      - "5000:5000"
+    
+    # Volume mounts for persistent data, logs, and model files
+    volumes:
+      - ./data:/app/data                          # Database and persistent data
+      - ./outputs:/app/outputs                    # Attendance/violation reports
+      - ./logs:/app/logs                          # Application logs
+      - ./app/ml_models:/app/app/ml_models       # ML models directory
+    
+    # Device access for webcam and audio (Linux/Mac)
+    devices:
+      - /dev/video0:/dev/video0                  # Webcam
+      - /dev/snd:/dev/snd                        # Audio device
+    
+    # Environment variables
+    environment:
+      - FLASK_APP=app.dashboard
+      - FLASK_ENV=production
+      - CAMERA_INDEX=0
+      - PYTHONUNBUFFERED=1
+      - EAGLE_EYE_SECRET=${EAGLE_EYE_SECRET:-your-secret-key-here}
+    
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Network
+    networks:
+      - eagleeye-network
+
+networks:
+  eagleeye-network:
+    driver: bridge

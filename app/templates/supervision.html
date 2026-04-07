@@ -1,816 +1,959 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eagle Eye - Live Monitoring Dashboard</title>
-    <link rel="icon" href="{{ url_for('static', filename='../data/logos/1favicon-32x32.png') }}" type="image/png">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Exam Supervision — EagleEye Proctor Mode</title>
+    <meta name="description" content="AI-powered exam supervision with real-time violation detection and live monitoring.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --bg-medium: #1e293b;
-            --bg-light: #334155;
-            --accent-primary: #3b82f6;
-            --accent-secondary: #6366f1;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
-            --accent-yellow: #f59e0b;
-            --text-primary: #f8fafc;
-            --text-secondary: #cbd5e1;
-            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            --transition: all 0.3s ease;
+            --bg: #0b0f1a;
+            --bg2: #111827;
+            --bg3: #1f2937;
+            --border: rgba(255,255,255,0.08);
+            --accent: #6366f1;
+            --accent2: #818cf8;
+            --green: #10b981;
+            --red: #f43f5e;
+            --yellow: #f59e0b;
+            --cyan: #22d3ee;
+            --orange: #f97316;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --card: rgba(255,255,255,0.04);
+            --card-border: rgba(255,255,255,0.08);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height: 100%; }
         body {
-            background: linear-gradient(135deg, #808080 0%, #008080 100%);
-            color: #FFFFFF;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* Header Styles */
-        .header {
-            background: rgba(59, 75, 101, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 20px 30px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--card-shadow);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: slideDown 0.5s ease-out;
-        }
-
-        .logo {
+        /* ── Top Nav ─────────────────────────────────────── */
+        .topbar {
+            height: 60px;
+            background: rgba(17,24,39,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 15px;
+            padding: 0 24px;
+            gap: 16px;
+            position: sticky; top: 0; z-index: 100;
         }
-
-        .logo h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .topbar-logo {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1rem; font-weight: 700;
+            color: var(--text);
+            text-decoration: none;
         }
-
-        .logo img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(54, 74, 112, 0.5);
-            transition: var(--transition);
-        }
-
-        .logo img:hover {
-            transform: rotate(10deg);
-        }
-
-        .logo p {
-            color: var(--text-secondary);
+        .topbar-logo .icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--red), #be123c);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
             font-size: 0.9rem;
-            margin-top: 4px;
         }
-
-        .feature-statuses {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .feature-status {
-            padding: 8px 15px;
+        .topbar-separator { color: var(--border); margin: 0 4px; }
+        .topbar-title { font-weight: 600; color: var(--muted); font-size: 0.9rem; }
+        .proctor-badge {
+            background: rgba(244,63,94,0.15);
+            border: 1px solid rgba(244,63,94,0.3);
+            color: var(--red);
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .topbar-right {
+            margin-left: auto;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .status-pill {
+            display: flex; align-items: center; gap: 7px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
             font-weight: 600;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid;
+            transition: all 0.3s;
         }
-
-        .feature-status.on {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+        .status-pill.offline {
+            background: rgba(100,116,139,0.1);
+            border-color: #334155;
+            color: var(--muted);
         }
-
-        .feature-status.off {
-            background: rgba(148, 163, 184, 0.2);
-            color: var(--text-secondary);
-            border: 1px solid rgba(148, 163, 184, 0.3);
+        .status-pill.online {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.3);
+            color: var(--green);
         }
-
-        .status-indicators {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: currentColor;
         }
-
-        .indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .status-pill.online .status-dot {
+            animation: pulse-dot 2s infinite;
         }
-
-        .dot {
-            width: 12px;
-            height: 12px;
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+            50% { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+        }
+        .time-display {
+            font-size: 0.9rem; font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+        .nav-user {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.82rem; color: var(--muted);
+        }
+        .nav-user .avatar {
+            width: 30px; height: 30px;
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
             border-radius: 50%;
-            transition: var(--transition);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: white;
         }
-
-        .dot.connected {
-            background-color: var(--accent-green);
-            box-shadow: 0 0 10px var(--accent-green);
-        }
-
-        .dot.disconnected {
-            background-color: var(--accent-red);
-        }
-
-        #time-display {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            background: var(--bg-medium);
-            padding: 8px 15px;
-            border-radius: 10px;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Main Content */
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 25px;
-        }
-
-        .video-container {
-            background: var(--bg-medium);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        .video-feed-wrapper {
-            position: relative;
-            width: 100%;
-            height: 0;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio */
-            overflow: hidden;
-        }
-
-        #video-feed {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: var(--transition);
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            backdrop-filter: blur(5px);
-            transition: var(--transition);
-        }
-
-        .controls {
-            padding: 20px;
-            display: flex;
-            gap: 15px;
-            background: rgba(30, 41, 59, 0.5);
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
+        .btn-back {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 14px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            transition: all 0.2s;
         }
+        .btn-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
 
-        .btn-primary {
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-            color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-secondary {
-            background: var(--bg-light);
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-            background: var(--accent-red);
-            transform: translateY(-2px);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .sidebar-section {
-            background: var(--bg-medium);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: var(--card-shadow);
-            animation: fadeIn 0.6s ease-out 0.2s both;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .sidebar-section h3 {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-primary);
-        }
-
-        .stats-grid {
+        /* ── Main Layout ─────────────────────────────────── */
+        .main-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: 1fr 380px;
+            gap: 0;
+            height: calc(100vh - 60px);
+            overflow: hidden;
         }
 
-        .stat-card {
-            background: rgba(30, 41, 59, 0.6);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            transition: var(--transition);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            border-color: var(--accent-primary);
-        }
-
-        .stat-card h4 {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .stat-card p {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent-primary);
-        }
-
-        .alerts-log {
-            flex-grow: 1;
-            overflow-y: auto;
-            max-height: 300px;
-            min-height: 100px;
+        /* ── Video Panel ─────────────────────────────────── */
+        .video-panel {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            border-right: 1px solid var(--border);
+            background: #080c14;
+        }
+        .video-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #040709;
+            min-height: 0;
+        }
+        #video-feed {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .video-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(8,12,20,0.85);
+            backdrop-filter: blur(4px);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 16px;
+            transition: opacity 0.4s;
+        }
+        .video-overlay.hidden { opacity: 0; pointer-events: none; }
+        .overlay-icon {
+            width: 80px; height: 80px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+        }
+        .overlay-text { font-size: 1.1rem; font-weight: 600; color: var(--muted); }
+        .overlay-sub { font-size: 0.8rem; color: #475569; }
+
+        /* Corner overlays on live video */
+        .video-corner-tl, .video-corner-tr, .video-corner-bl, .video-corner-br {
+            position: absolute;
+            width: 20px; height: 20px;
+            border-color: rgba(244,63,94,0.6);
+            border-style: solid;
+        }
+        .video-corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+        .video-corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+        .video-corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+        .video-corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+        /* Violation banner */
+        .violation-banner {
+            position: absolute; top: 0; left: 0; right: 0;
+            background: linear-gradient(90deg, rgba(244,63,94,0.9), rgba(190,18,60,0.9));
+            padding: 10px 20px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.85rem; font-weight: 600;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+            z-index: 10;
+        }
+        .violation-banner.show { transform: translateY(0); }
+
+        /* Feature module status */
+        .module-status-bar {
+            padding: 10px 16px;
+            display: flex; gap: 10px;
+            background: rgba(8,12,20,0.8);
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .module-chip {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid;
+            transition: all 0.3s;
+        }
+        .module-chip.active {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.3);
+            color: var(--green);
+        }
+        .module-chip.inactive {
+            background: rgba(100,116,139,0.08);
+            border-color: #334155;
+            color: #64748b;
+        }
+        .module-chip i { font-size: 0.7rem; }
+
+        /* Control Bar */
+        .control-bar {
+            padding: 14px 20px;
+            display: flex; gap: 12px; align-items: center;
+            background: rgba(17,24,39,0.8);
+            border-top: 1px solid var(--border);
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none; border-radius: 10px;
+            font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; font-family: 'Inter', sans-serif;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+        .btn-start {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+        }
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16,185,129,0.4);
+        }
+        .btn-stop {
+            background: rgba(244,63,94,0.15);
+            border: 1px solid rgba(244,63,94,0.3);
+            color: var(--red);
+        }
+        .btn-stop:hover:not(:disabled) {
+            background: rgba(244,63,94,0.25);
+            transform: translateY(-2px);
+        }
+        .camera-selector-wrap {
+            display: flex; align-items: center; gap: 8px;
+            margin-left: auto;
+        }
+        .camera-selector-wrap label {
+            font-size: 0.78rem; color: var(--muted);
+            white-space: nowrap;
+        }
+        select#camera-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            outline: none;
+        }
+        select#camera-select:focus { border-color: var(--accent); }
+
+        /* ── Sidebar ─────────────────────────────────────── */
+        .sidebar {
+            display: flex; flex-direction: column;
+            overflow-y: auto;
+            background: var(--bg);
+        }
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+
+        /* Stats Strip */
+        .stats-strip {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-cell {
+            padding: 16px;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .stat-cell:last-child { border-right: none; }
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            background: linear-gradient(135deg, var(--accent2), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label { font-size: 0.68rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Section Headers */
+        .section-header {
+            padding: 16px 20px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .section-header h3 {
+            font-size: 0.85rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-header h3 i { color: var(--accent2); }
+        .badge-count {
+            background: rgba(244,63,94,0.15);
+            border: 1px solid rgba(244,63,94,0.2);
+            color: var(--red);
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .badge-count.zero {
+            background: rgba(100,116,139,0.1);
+            border-color: #334155;
+            color: var(--muted);
         }
 
-        .alert-placeholder {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: 20px;
-            font-style: italic;
+        /* Alerts Log */
+        .alerts-container {
+            flex: 0 0 auto;
+            min-height: 200px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 0 16px 16px;
         }
+        .alerts-container::-webkit-scrollbar { width: 3px; }
+        .alerts-container::-webkit-scrollbar-thumb { background: #1e293b; }
+
+        .alert-empty {
+            text-align: center;
+            padding: 30px 16px;
+            color: #475569;
+            font-size: 0.82rem;
+        }
+        .alert-empty i { display: block; font-size: 1.5rem; margin-bottom: 8px; }
 
         .alert-item {
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 10px;
-            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--yellow);
+            border-radius: 0 10px 10px 0;
+            padding: 12px 14px;
+            margin-bottom: 8px;
             animation: slideIn 0.3s ease-out;
-            border-left: 4px solid var(--accent-yellow);
-            transition: var(--transition);
+            transition: background 0.2s;
         }
-
-        .alert-item:hover {
-            transform: translateX(5px);
-            background: rgba(30, 41, 59, 0.8);
-        }
-
-        .alert-item.severity-high {
-            border-left-color: var(--accent-red);
-        }
-
-        .alert-item.severity-medium {
-            border-left-color: var(--accent-yellow);
-        }
-
-        .alert-item.severity-low {
-            border-left-color: var(--accent-primary);
-        }
-
-        .timestamp {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-        }
-
-        .message {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--text-primary);
-        }
-
-        .details {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        /* Controls Section */
-        .controls-section {
-            margin-top: 0;
-            background: var(--bg-medium);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            animation: fadeIn 0.6s ease-out 0.4s both;
-        }
-
-        .controls-section h3 {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-primary);
-        }
-
-        .control-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .control-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #475569;
-            transition: .4s;
-            border-radius: 26px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
-
-        /* Animations */
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
+        .alert-item:hover { background: rgba(255,255,255,0.06); }
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
+        .alert-item.severity-high { border-left-color: var(--red); }
+        .alert-item.severity-medium { border-left-color: var(--yellow); }
+        .alert-item.severity-low { border-left-color: var(--accent); }
+        .alert-type {
+            font-size: 0.78rem; font-weight: 700;
+            color: var(--text);
+            margin-bottom: 3px;
+            display: flex; align-items: center; gap: 6px;
         }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .header {
-                flex-direction: column;
-                gap: 20px;
-                text-align: center;
-            }
-            
-            .logo {
-                justify-content: center;
-            }
+        .severity-badge {
+            font-size: 0.6rem; padding: 1px 6px; border-radius: 8px;
+            text-transform: uppercase; font-weight: 800;
         }
+        .severity-badge.high { background: rgba(244,63,94,0.2); color: var(--red); }
+        .severity-badge.medium { background: rgba(245,158,11,0.2); color: var(--yellow); }
+        .severity-badge.low { background: rgba(99,102,241,0.2); color: var(--accent2); }
+        .alert-msg { font-size: 0.77rem; color: var(--muted); margin-bottom: 4px; }
+        .alert-time { font-size: 0.68rem; color: #475569; }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .feature-statuses {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .controls {
-                flex-direction: column;
-            }
+        /* Controls Panel */
+        .controls-panel {
+            border-top: 1px solid var(--border);
+            padding: 16px 20px;
+        }
+        .controls-panel h4 {
+            font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--muted);
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .controls-panel h4 i { color: var(--accent2); }
+
+        .toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.83rem; font-weight: 500;
+        }
+        .toggle-label .icon-wrap {
+            width: 28px; height: 28px;
+            border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+        }
+        .toggle-label .desc { font-size: 0.7rem; color: var(--muted); display: block; margin-top: 1px; }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative; display: inline-block;
+            width: 44px; height: 24px; flex-shrink: 0;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: #334155;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .slider:before {
+            content: '';
+            position: absolute;
+            width: 18px; height: 18px;
+            left: 3px; bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        input:checked + .slider { background: var(--accent); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Camera Error Panel */
+        .camera-error-panel {
+            display: none;
+            background: rgba(244,63,94,0.08);
+            border: 1px solid rgba(244,63,94,0.2);
+            border-radius: 12px;
+            margin: 12px 20px;
+            padding: 16px;
+        }
+        .camera-error-panel h4 {
+            font-size: 0.85rem; font-weight: 700;
+            color: var(--red);
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .camera-error-panel p { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+        .camera-error-panel ul {
+            font-size: 0.75rem; color: #64748b;
+            padding-left: 16px; line-height: 2;
+        }
+        .btn-retry {
+            margin-top: 12px;
+            background: rgba(244,63,94,0.15);
+            border: 1px solid rgba(244,63,94,0.3);
+            color: var(--red);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+        .btn-retry:hover { background: rgba(244,63,94,0.25); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; height: auto; }
+            .video-panel { height: 60vw; min-height: 300px; }
+            .sidebar { max-height: none; }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <header class="header">
-            <div class="logo">
-                <h1><img src="{{ url_for('static', filename='../data/logos/circle-croped-logo.png') }}"> Eagle Eye</h1>
-                <p>Live Exam Supervision</p>
+<!-- Top Navigation Bar -->
+<nav class="topbar">
+    <a href="{{ url_for('hub') }}" class="topbar-logo">
+        <div class="icon">🦅</div>
+        EagleEye
+    </a>
+    <span class="topbar-separator">/</span>
+    <span class="topbar-title">Exam Supervision</span>
+    <span class="proctor-badge">⚡ Proctor Mode</span>
+
+    <div class="topbar-right">
+        <div class="status-pill offline" id="conn-status">
+            <span class="status-dot"></span>
+            <span id="conn-text">Disconnected</span>
+        </div>
+        <div class="time-display" id="time-display">--:--:--</div>
+        <div class="nav-user">
+            <div class="avatar">{{ current_user.username[0].upper() }}</div>
+            <span>{{ current_user.name }}</span>
+        </div>
+        <a href="{{ url_for('hub') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Hub
+        </a>
+    </div>
+</nav>
+
+<div class="main-layout">
+    <!-- Video Panel -->
+    <div class="video-panel">
+        <div class="video-wrapper">
+            <!-- Corner marks (shown when live) -->
+            <div class="video-corner-tl" id="vc-tl" style="display:none;"></div>
+            <div class="video-corner-tr" id="vc-tr" style="display:none;"></div>
+            <div class="video-corner-bl" id="vc-bl" style="display:none;"></div>
+            <div class="video-corner-br" id="vc-br" style="display:none;"></div>
+
+            <!-- Violation banner -->
+            <div class="violation-banner" id="violation-banner">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="violation-banner-text">VIOLATION DETECTED</span>
             </div>
 
-            <div id="feature-statuses" class="feature-statuses">
-                <span id="status-audio" class="feature-status on"><i class="fas fa-microphone"></i> Audio</span>
-                <span id="status-gaze" class="feature-status on"><i class="fas fa-eye"></i> Gaze</span>
-                <span id="status-object" class="feature-status on"><i class="fas fa-mobile-alt"></i> Object</span>
-                <span id="status-posture" class="feature-status on"><i class="fas fa-user"></i> Posture</span>
-            </div>
+            <!-- Live feed image -->
+            <img id="video-feed" src="" alt="Live supervision feed" style="display:none;">
 
-            <div class="status-indicators">
-                <div class="indicator">
-                    <span id="status-dot" class="dot disconnected"></span>
-                    <span id="status-text">DISCONNECTED</span>
-                </div>
-                <div class="indicator">
-                    <span id="time-display">--:--:--</span>
-                </div>
+            <!-- Overlay (shown when paused) -->
+            <div class="video-overlay" id="video-overlay">
+                <div class="overlay-icon">📷</div>
+                <div class="overlay-text">Supervision Paused</div>
+                <div class="overlay-sub">Click "Start Supervision" to begin monitoring</div>
             </div>
-        </header>
+        </div>
 
-        <main class="main-content">
-            <div class="video-container">
-                <div class="video-feed-wrapper">
-                    <img id="video-feed" src="{{ url_for('static', filename='circle-croped-logo.png') }}"
-                        alt="Live Video Feed">
-                    <div id="supervision-overlay" class="overlay">SUPERVISION PAUSED</div>
-                </div>
-                <div class="controls">
-                    <button id="start-btn" class="btn btn-primary"><i class="fas fa-play"></i> Start Supervision</button>
-                    <button id="stop-btn" class="btn btn-secondary" disabled><i class="fas fa-stop"></i> Stop Supervision</button>
-                </div>
-            </div>
+        <!-- Module Status Bar -->
+        <div class="module-status-bar">
+            <div class="module-chip active" id="chip-audio"><i class="fas fa-microphone"></i> Audio</div>
+            <div class="module-chip active" id="chip-gaze"><i class="fas fa-eye"></i> Gaze</div>
+            <div class="module-chip active" id="chip-object"><i class="fas fa-mobile-alt"></i> Objects</div>
+            <div class="module-chip active" id="chip-posture"><i class="fas fa-user"></i> Posture</div>
+        </div>
 
-            <div class="sidebar">
-                <div class="sidebar-section">
-                    <h3><i class="fas fa-chart-bar"></i> System Stats</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h4>FPS</h4>
-                            <p id="fps-stat">--</p>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Faces</h4>
-                            <p id="faces-stat">--</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="sidebar-section" style="flex-grow: 1; display: flex; flex-direction: column;">
-                    <h3><i class="fas fa-bell"></i> Real-Time Alerts</h3>
-                    <div id="alerts-log" class="alerts-log">
-                        <div class="alert-placeholder">Monitoring for suspicious activity...</div>
-                    </div>
-                </div>
-                
-                <!-- Admin Controls Panel -->
-                <!-- {% if current_user.role == 'admin' %} -->
-                <div class="controls-section">
-                    <h3><i class="fas fa-cog"></i> Admin Controls</h3>
-                    <div class="control-item" title="Only-Admin Controls">
-                        <span><i class="fas fa-microphone"></i> Audio Analysis</span>
-                        <label class="switch"><input type="checkbox" id="toggle-audio" data-module="audio" checked><span
-                                class="slider"></span></label>
-                    </div>
-                    <div class="control-item">
-                        <span><i class="fas fa-eye"></i> Gaze Detection</span>
-                        <label class="switch"><input type="checkbox" id="toggle-gaze" data-module="gaze" checked><span
-                                class="slider"></span></label>
-                    </div>
-                    <div class="control-item">
-                        <span><i class="fas fa-mobile-alt"></i> Object Detection</span>
-                        <label class="switch"><input type="checkbox" id="toggle-object" data-module="object"
-                                checked><span class="slider"></span></label>
-                    </div>
-                    <div class="control-item">
-                        <span><i class="fas fa-user"></i> Posture Analysis</span>
-                        <label class="switch"><input type="checkbox" id="toggle-posture" data-module="posture"
-                                checked><span class="slider"></span></label>
-                    </div>
-                </div>
-                <!-- {% endif %} -->
+        <!-- Control Bar -->
+        <div class="control-bar">
+            <button class="btn btn-start" id="start-btn">
+                <i class="fas fa-play"></i> Start Supervision
+            </button>
+            <button class="btn btn-stop" id="stop-btn" disabled>
+                <i class="fas fa-stop"></i> Stop
+            </button>
+            <div class="camera-selector-wrap">
+                <label for="camera-select"><i class="fas fa-camera"></i> Camera:</label>
+                <select id="camera-select">
+                    <option value="0">Camera 0 (Default)</option>
+                </select>
             </div>
-        </main>
+        </div>
     </div>
 
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        // Initialize animations
-        AOS.init({
-            duration: 800,
-            once: true,
-            easing: 'ease-out-quart'
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Stats Strip -->
+        <div class="stats-strip">
+            <div class="stat-cell">
+                <div class="stat-val" id="fps-stat">—</div>
+                <div class="stat-label">FPS</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-val" id="faces-stat">—</div>
+                <div class="stat-label">Faces</div>
+            </div>
+            <div class="stat-cell">
+                <div class="stat-val" id="alerts-count" style="font-size:1.3rem; color:var(--red);">0</div>
+                <div class="stat-label">Violations</div>
+            </div>
+        </div>
+
+        <!-- Camera Error Panel -->
+        <div class="camera-error-panel" id="camera-error-panel">
+            <h4><i class="fas fa-camera-slash"></i> Camera Not Available</h4>
+            <p id="camera-error-msg">Unable to access the camera.</p>
+            <ul>
+                <li>Close other apps using the camera (Zoom, Teams, etc)</li>
+                <li>Check browser privacy permissions</li>
+                <li>Try selecting a different camera above</li>
+                <li>Ensure HTTPS or localhost is being used</li>
+                <li>Try an external USB webcam</li>
+            </ul>
+            <button class="btn-retry" id="btn-retry"><i class="fas fa-redo"></i> Retry</button>
+        </div>
+
+        <!-- Alerts Log -->
+        <div class="section-header">
+            <h3><i class="fas fa-bell"></i> Violation Log</h3>
+            <span class="badge-count zero" id="alert-badge">0</span>
+        </div>
+        <div class="alerts-container" id="alerts-log">
+            <div class="alert-empty" id="alert-empty">
+                <i class="fas fa-shield-check"></i>
+                No violations detected yet
+            </div>
+        </div>
+
+        <!-- Admin/Invigilator Controls -->
+        {% if current_user.role in ['admin', 'invigilator'] %}
+        <div class="controls-panel">
+            <h4><i class="fas fa-sliders-h"></i> Detection Modules</h4>
+
+            <div class="toggle-row">
+                <div class="toggle-label">
+                    <div class="icon-wrap" style="background:rgba(34,211,238,0.15);">
+                        <i class="fas fa-microphone" style="color:#22d3ee;"></i>
+                    </div>
+                    <div>
+                        Audio Analysis
+                        <span class="desc">Detect whispers & sounds</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-audio" data-module="audio" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-label">
+                    <div class="icon-wrap" style="background:rgba(129,140,248,0.15);">
+                        <i class="fas fa-eye" style="color:#818cf8;"></i>
+                    </div>
+                    <div>
+                        Gaze Detection
+                        <span class="desc">Track eye movement</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-gaze" data-module="gaze" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-label">
+                    <div class="icon-wrap" style="background:rgba(249,115,22,0.15);">
+                        <i class="fas fa-mobile-alt" style="color:#f97316;"></i>
+                    </div>
+                    <div>
+                        Object Detection
+                        <span class="desc">Phone, book detection</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-object" data-module="object" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div class="toggle-label">
+                    <div class="icon-wrap" style="background:rgba(16,185,129,0.15);">
+                        <i class="fas fa-user" style="color:#10b981;"></i>
+                    </div>
+                    <div>
+                        Posture Analysis
+                        <span class="desc">Detect suspicious poses</span>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="toggle-posture" data-module="posture" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Export Link -->
+        <div style="padding: 12px 20px; border-top: 1px solid var(--border);">
+            <a href="/api/violations/export" style="font-size:0.78rem; color:var(--accent2); text-decoration:none; display:flex; align-items:center; gap:6px;">
+                <i class="fas fa-download"></i> Export Violations CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // ── DOM Refs ────────────────────────────────────────────────────
+    const videoFeed         = document.getElementById('video-feed');
+    const videoOverlay      = document.getElementById('video-overlay');
+    const violationBanner   = document.getElementById('violation-banner');
+    const violationBannerTx = document.getElementById('violation-banner-text');
+    const startBtn          = document.getElementById('start-btn');
+    const stopBtn           = document.getElementById('stop-btn');
+    const connStatus        = document.getElementById('conn-status');
+    const connText          = document.getElementById('conn-text');
+    const alertsLog         = document.getElementById('alerts-log');
+    const alertBadge        = document.getElementById('alert-badge');
+    const alertEmpty        = document.getElementById('alert-empty');
+    const fpsStat           = document.getElementById('fps-stat');
+    const facesStat         = document.getElementById('faces-stat');
+    const alertsCount       = document.getElementById('alerts-count');
+    const timeDisplay       = document.getElementById('time-display');
+    const cameraErrorPanel  = document.getElementById('camera-error-panel');
+    const cameraErrorMsg    = document.getElementById('camera-error-msg');
+    const cameraSelect      = document.getElementById('camera-select');
+    const retryBtn          = document.getElementById('btn-retry');
+    const corners           = ['vc-tl','vc-tr','vc-bl','vc-br'].map(id => document.getElementById(id));
+
+    const moduleChips = {
+        audio:   document.getElementById('chip-audio'),
+        gaze:    document.getElementById('chip-gaze'),
+        object:  document.getElementById('chip-object'),
+        posture: document.getElementById('chip-posture'),
+    };
+    const toggles = document.querySelectorAll('.switch input[data-module]');
+
+    let totalAlerts = 0;
+    let bannerTimer = null;
+
+    // ── Socket ──────────────────────────────────────────────────────
+    const socket = io('/supervision', { transports: ['websocket', 'polling'] });
+
+    socket.on('connect', () => {
+        connStatus.className = 'status-pill online';
+        connText.textContent = 'Connected';
+        hideCameraError();
+        console.log('[SOCKET] Connected to /supervision');
+    });
+
+    socket.on('disconnect', () => {
+        connStatus.className = 'status-pill offline';
+        connText.textContent = 'Disconnected';
+        stopSupervisionUI();
+    });
+
+    socket.on('supervision_error', (data) => {
+        console.error('[ERROR]', data);
+        stopSupervisionUI();
+        showCameraError(data.message || 'Supervision error occurred.', data.debug);
+    });
+
+    socket.on('video_frame', (data) => {
+        // Show the feed on the very first frame (handles auto-resume / reconnect)
+        if (videoFeed.style.display === 'none') {
+            videoOverlay.classList.add('hidden');
+            videoFeed.style.display = 'block';
+            corners.forEach(c => c.style.display = 'block');
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            hideCameraError();
+        }
+        videoFeed.src = `data:image/jpeg;base64,${data.image}`;
+        fpsStat.textContent = data.fps ?? '—';
+        facesStat.textContent = data.face_count ?? '—';
+    });
+
+    socket.on('new_alert', (alert) => {
+        addAlertToLog(alert);
+        flashViolationBanner(alert.type);
+        totalAlerts++;
+        alertsCount.textContent = totalAlerts;
+    });
+
+    socket.on('controls_update', (data) => {
+        for (const [mod, enabled] of Object.entries(data)) {
+            const chip = moduleChips[mod];
+            if (chip) {
+                chip.className = `module-chip ${enabled ? 'active' : 'inactive'}`;
+            }
+        }
+    });
+
+    socket.on('supervision_stopped', () => {
+        stopSupervisionUI();
+    });
+
+    socket.on('camera_info', (data) => {
+        console.log(`[CAMERA] Streaming from camera index ${data.index}`);
+    });
+
+    // ── Controls ────────────────────────────────────────────────────
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', () => {
+            const module = toggle.dataset.module;
+            socket.emit('update_controls', { module, enabled: toggle.checked });
         });
+    });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Explicitly connect to the '/supervision' namespace
-            const socket = io('/supervision');
+    startBtn.addEventListener('click', () => {
+        const camIdx = parseInt(cameraSelect.value) || 0;
+        socket.emit('start_supervision', { camera_index: camIdx });
+        startSupervisionUI();
+    });
 
-            // --- References to elements ---
-            const featureStatuses = {
-                audio: document.getElementById('status-audio'),
-                gaze: document.getElementById('status-gaze'),
-                object: document.getElementById('status-object'),
-                posture: document.getElementById('status-posture')
-            };
-            const toggles = document.querySelectorAll('.switch input');
+    stopBtn.addEventListener('click', () => {
+        socket.emit('stop_supervision');
+        stopSupervisionUI();
+    });
 
-            // Get references to all the HTML elements
-            const videoFeed = document.getElementById('video-feed');
-            const supervisionOverlay = document.getElementById('supervision-overlay');
-            const startBtn = document.getElementById('start-btn');
-            const stopBtn = document.getElementById('stop-btn');
-            const statusDot = document.getElementById('status-dot');
-            const statusText = document.getElementById('status-text');
-            const timeDisplay = document.getElementById('time-display');
-            const fpsStat = document.getElementById('fps-stat');
-            const facesStat = document.getElementById('faces-stat');
-            const alertsLog = document.getElementById('alerts-log');
+    retryBtn.addEventListener('click', () => {
+        hideCameraError();
+        const camIdx = parseInt(cameraSelect.value) || 0;
+        socket.emit('start_supervision', { camera_index: camIdx });
+        startSupervisionUI();
+    });
 
-            // --- Socket.IO Event Listeners ---
-
-            socket.on('controls_update', (data) => {
-                console.log('Received control update:', data);
-                for (const module in data) {
-                    if (featureStatuses[module]) {
-                        const statusElement = featureStatuses[module];
-                        if (data[module]) {
-                            statusElement.classList.add('on');
-                            statusElement.classList.remove('off');
-                        } else {
-                            statusElement.classList.add('off');
-                            statusElement.classList.remove('on');
-                        }
-                    }
-                }
-            });
-
-            // --- Event listener for the control toggles ---
-            toggles.forEach(toggle => {
-                toggle.addEventListener('change', () => {
-                    const module = toggle.dataset.module;
-                    const enabled = toggle.checked;
-                    console.log(`Sending control change: ${module} -> ${enabled}`);
-                    socket.emit('update_controls', { module: module, enabled: enabled });
-                });
-            });
-
-            socket.on('connect', () => {
-                console.log('Connected to /supervision namespace!');
-                statusDot.classList.remove('disconnected');
-                statusDot.classList.add('connected');
-                statusText.textContent = 'CONNECTED';
-                
-                // Add pulse animation when connected
-                statusDot.style.animation = 'pulse 2s infinite';
-            });
-
-            socket.on('disconnect', () => {
-                console.log('Disconnected from /supervision namespace.');
-                statusDot.classList.remove('connected');
-                statusDot.classList.add('disconnected');
-                statusText.textContent = 'DISCONNECTED';
-                statusDot.style.animation = 'none';
-                stopSupervisionUI();
-            });
-
-            socket.on('video_frame', (data) => {
-                videoFeed.src = `data:image/jpeg;base64,${data.image}`;
-                fpsStat.textContent = data.fps;
-                facesStat.textContent = data.face_count;
-                
-                // Add animation to stats when updated
-                fpsStat.style.transform = 'scale(1.1)';
-                facesStat.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    fpsStat.style.transform = 'scale(1)';
-                    facesStat.style.transform = 'scale(1)';
-                }, 300);
-            });
-
-            socket.on('new_alert', (alert) => {
-                const placeholder = alertsLog.querySelector('.alert-placeholder');
-                if (placeholder) placeholder.remove();
-
-                const alertItem = document.createElement('div');
-                alertItem.classList.add('alert-item', `severity-${alert.severity}`);
-                alertItem.innerHTML = `
-                    <div class="timestamp">${new Date().toLocaleTimeString()}</div>
-                    <div class="message">${alert.type}</div>
-                    <div class="details">${alert.message}</div>
-                `;
-                alertsLog.prepend(alertItem);
-                
-                // Add highlight effect to alerts section header
-                const alertsHeader = document.querySelector('.sidebar-section h3');
-                alertsHeader.style.color = 'var(--accent-red)';
-                setTimeout(() => {
-                    alertsHeader.style.color = 'var(--text-primary)';
-                }, 1000);
-            });
-
-            socket.on('supervision_stopped', () => {
-                stopSupervisionUI();
-                console.log('Supervision stopped by server.');
-            });
-
-            // --- UI Functions ---
-            function startSupervisionUI() {
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-                supervisionOverlay.style.display = 'none';
-                alertsLog.innerHTML = '<div class="alert-placeholder">Monitoring for suspicious activity...</div>';
-                
-                // Add animation to video feed
-                videoFeed.style.transform = 'scale(1.02)';
-                setTimeout(() => {
-                    videoFeed.style.transform = 'scale(1)';
-                }, 300);
-            }
-
-            function stopSupervisionUI() {
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
-                supervisionOverlay.style.display = 'flex';
-                videoFeed.src = "{{ url_for('static', filename='circle-croped-logo.png') }}";
-                fpsStat.textContent = '--';
-                facesStat.textContent = '--';
-            }
-
-            // --- Button Event Handlers ---
-            startBtn.addEventListener('click', () => {
-                console.log('Emitting start_supervision to /supervision namespace...');
-                socket.emit('start_supervision');
+    // Re-start with new camera if user changes dropdown while supervision is running
+    cameraSelect.addEventListener('change', () => {
+        if (!stopBtn.disabled) {  // supervision is running
+            socket.emit('stop_supervision');
+            stopSupervisionUI();
+            setTimeout(() => {
+                const camIdx = parseInt(cameraSelect.value) || 0;
+                socket.emit('start_supervision', { camera_index: camIdx });
                 startSupervisionUI();
-                
-                // Button animation
-                startBtn.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    startBtn.style.transform = 'scale(1)';
-                }, 200);
-            });
+            }, 800);
+        }
+    });
 
-            stopBtn.addEventListener('click', () => {
-                console.log('Emitting stop_supervision to /supervision namespace...');
-                socket.emit('stop_supervision');
-                stopSupervisionUI();
-                
-                // Button animation
-                stopBtn.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    stopBtn.style.transform = 'scale(1)';
-                }, 200);
-            });
-
-            // --- Clock Utility ---
-            function updateTime() {
-                timeDisplay.textContent = new Date().toLocaleTimeString();
+    // ── Camera Selector ─────────────────────────────────────────────
+    fetch('/api/cameras')
+        .then(r => r.json())
+        .then(d => {
+            cameraSelect.innerHTML = '';
+            if (d.cameras.length === 0) {
+                cameraSelect.innerHTML = '<option value="">No cameras found</option>';
+            } else {
+                d.cameras.forEach(idx => {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.textContent = `Camera ${idx}${idx === d.default ? ' (Default)' : ''}`;
+                    if (idx === d.default) opt.selected = true;
+                    cameraSelect.appendChild(opt);
+                });
             }
-            setInterval(updateTime, 1000);
-            updateTime();
+        })
+        .catch(() => {
+            cameraSelect.innerHTML = '<option value="0">Camera 0 (Default)</option>';
         });
-    </script>
-</body>
 
+    // ── UI Functions ────────────────────────────────────────────────
+    function startSupervisionUI() {
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        videoOverlay.classList.add('hidden');
+        videoFeed.style.display = 'block';
+        corners.forEach(c => c.style.display = 'block');
+        hideCameraError();
+        // Reset alert counter for new session
+        totalAlerts = 0;
+        alertsCount.textContent = '0';
+        alertBadge.textContent = '0';
+        alertBadge.className = 'badge-count zero';
+        alertsLog.innerHTML = '<div class="alert-empty" id="alert-empty"><i class="fas fa-shield-check"></i> Monitoring active...</div>';
+    }
+
+    function stopSupervisionUI() {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        videoOverlay.classList.remove('hidden');
+        videoFeed.style.display = 'none';
+        videoFeed.src = '';
+        corners.forEach(c => c.style.display = 'none');
+        fpsStat.textContent = '—';
+        facesStat.textContent = '—';
+    }
+
+    function addAlertToLog(alert) {
+        const empty = document.getElementById('alert-empty');
+        if (empty) empty.remove();
+
+        const item = document.createElement('div');
+        item.className = `alert-item severity-${alert.severity || 'medium'}`;
+
+        const severityIcon = {
+            high: '🔴', medium: '🟡', low: '🔵'
+        }[alert.severity] || '⚠';
+
+        item.innerHTML = `
+            <div class="alert-type">
+                ${severityIcon} ${alert.type || 'Alert'}
+                <span class="severity-badge ${alert.severity || 'medium'}">${alert.severity || 'medium'}</span>
+            </div>
+            <div class="alert-msg">${alert.message || ''}</div>
+            <div class="alert-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        alertsLog.prepend(item);
+
+        // Update badge
+        const current = parseInt(alertBadge.textContent) || 0;
+        alertBadge.textContent = current + 1;
+        alertBadge.className = 'badge-count';
+    }
+
+    function flashViolationBanner(text) {
+        violationBannerTx.textContent = `⚠ ${text || 'VIOLATION DETECTED'}`;
+        violationBanner.classList.add('show');
+        if (bannerTimer) clearTimeout(bannerTimer);
+        bannerTimer = setTimeout(() => violationBanner.classList.remove('show'), 3000);
+    }
+
+    function showCameraError(msg, debug) {
+        cameraErrorMsg.textContent = msg;
+        cameraErrorPanel.style.display = 'block';
+        if (debug && debug.tip) {
+            cameraErrorMsg.textContent = msg + ' — ' + debug.tip;
+        }
+    }
+
+    function hideCameraError() {
+        cameraErrorPanel.style.display = 'none';
+    }
+
+    // ── Clock ───────────────────────────────────────────────────────
+    function updateClock() {
+        timeDisplay.textContent = new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+});
+</script>
+</body>
 </html>

@@ -1,0 +1,57 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov/
+tests/
+
+# Documentation
+documentation/
+*.md
+*.txt.bak
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.log.old
+*.tmp
+*.bak
+
+# Virtual environments
+.venv
+venv
+env
+
+# Large model files not needed (if already in image)
+*.pt.bak
+*.pth.bak
