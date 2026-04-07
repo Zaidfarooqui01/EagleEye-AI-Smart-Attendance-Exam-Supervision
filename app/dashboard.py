@@ -77,29 +77,7 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return get_user(user_id)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Role-Based Access Decorators
-# ─────────────────────────────────────────────────────────────────────────────
-def role_required(*roles):
-    """Decorator to restrict routes to specific roles."""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated:
-                return redirect(url_for('login'))
-            if current_user.role not in roles:
-                logger.warning(
-                    f"Unauthorized access attempt by {current_user.username} "
-                    f"(role={current_user.role}) to restricted route."
-                )
-                return redirect(url_for('hub'))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Global Thread & State Management
-# ─────────────────────────────────────────────────────────────────────────────
+# --- Global Thread Management ---
 active_threads = {}
 stop_events = {}
 thread_cleanup_lock = threading.Lock()
@@ -540,38 +518,12 @@ def attendance_thread(app_context, stop_event):
         try:
             while not stop_event.is_set():
                 ret, frame = cap.read()
-
-                # ── Guard: skip bad/empty frames ─────────────────────────────
-                if not ret or frame is None or frame.size == 0:
-                    time.sleep(0.05)
+                if not ret: 
                     continue
-
-                # ── Guard: ensure 8-bit 3-channel BGR (face_recognition requirement) ─
-                import numpy as _np
-                if frame.dtype != _np.uint8:
-                    frame = frame.astype(_np.uint8)
-                if len(frame.shape) != 3 or frame.shape[2] != 3:
-                    logger.warning("[ATTENDANCE] Unexpected frame shape, skipping frame.")
-                    continue
-
-                # Convert BGR -> RGB in contiguous memory layout
-                rgb_frame = _np.ascontiguousarray(
-                    cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), dtype=_np.uint8
-                )
-
-                # ── Run face recognition (per-frame try/except) ──────────────
-                try:
-                    face_data = face_recognizer.recognize_faces(rgb_frame)
-                except Exception as fe:
-                    logger.warning(f"[ATTENDANCE] Face recognition error: {fe}")
-                    # Still stream the raw video so the feed stays alive
-                    _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
-                    socketio.emit('video_frame',
-                                  {'image': base64.b64encode(buffer).decode('utf-8')},
-                                  namespace='/attendance')
-                    socketio.sleep(0.05)
-                    continue
-
+                
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                face_data = face_recognizer.recognize_faces(rgb_frame)
+                
                 for person in face_data:
                     student_id = person.get('id')
                     student_name = person.get('name', 'Unknown')
@@ -666,31 +618,15 @@ def portal():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('hub'))
-    
-    error = None
-    selected_role = request.args.get('role', '')  # Pre-select role from hub
-
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        
-        if not username or not password:
-            error = 'Please enter both username and password.'
-        else:
-            user = users.get(username)
-            if user and user.check_password(password):
-                login_user(user, remember=True)
-                logger.info(f"[AUTH] Login: {username} (role={user.role})")
-                next_page = request.args.get('next')
-                return redirect(next_page or url_for('hub'))
-            else:
-                error = 'Invalid username or password. Please try again.'
-                logger.warning(f"[AUTH] Failed login attempt for username: '{username}'")
-
-    return render_template('login.html', error=error, selected_role=selected_role,
-                           role_display=ROLE_DISPLAY)
+        username = request.form['username']
+        password = request.form['password']
+        user = users.get(username)
+        if user and user.password == password:
+            login_user(user)
+            return redirect(url_for('hub'))
+        return render_template('login.html', error='Invalid credentials')
+    return render_template('login.html')
 
 @app.route('/logout')
 @login_required
@@ -721,102 +657,18 @@ def attendance():
 @login_required
 @role_required('admin')
 def register():
-    return render_template('register.html', current_user=current_user)
+    if current_user.role != 'admin':
+        return redirect(url_for('hub'))
+    return render_template('register.html')
 
-# Kiosk mode — No auth required
-@app.route('/kiosk')
-def kiosk():
-    return render_template('kiosk.html')
-
-# Admin dashboard
-@app.route('/admin')
+@app.route('/')
 @login_required
-@role_required('admin')
-def admin_dashboard():
-    violations = get_violations_from_db(100)
-    return render_template('admin.html', current_user=current_user, violations=violations)
+def home():
+    return redirect(url_for('hub'))
 
-# Student dashboard
-@app.route('/student')
-@login_required
-@role_required('student')
-def student_dashboard():
-    import datetime
-    return render_template('student.html', current_user=current_user,
-                           now_date=datetime.date.today().strftime('%A, %B %d %Y'))
+# --- Socket.IO Namespaces & Handlers ---
 
-# Faculty dashboard
-@app.route('/faculty')
-@login_required
-@role_required('faculty')
-def faculty_dashboard():
-    return render_template('faculty.html', current_user=current_user)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# API Routes
-# ─────────────────────────────────────────────────────────────────────────────
-@app.route('/api/cameras')
-@login_required
-def api_cameras():
-    """Returns list of available camera indices."""
-    cameras = enumerate_cameras()
-    return jsonify({
-        'status': 'ok',
-        'cameras': cameras,
-        'default': CAMERA_INDEX,
-        'count': len(cameras)
-    })
-
-@app.route('/api/violations')
-@login_required
-@role_required('admin', 'invigilator')
-def api_violations():
-    """Returns recent violations as JSON."""
-    limit = request.args.get('limit', 50, type=int)
-    violations = get_violations_from_db(limit)
-    return jsonify({'status': 'ok', 'violations': violations, 'count': len(violations)})
-
-@app.route('/api/violations/export')
-@login_required
-@role_required('admin')
-def api_export_violations():
-    """Export violations as CSV."""
-    import io
-    violations = get_violations_from_db(1000)
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=['id', 'student_id', 'violation_type', 'timestamp', 'details', 'snapshot_path'])
-    writer.writeheader()
-    writer.writerows(violations)
-    
-    from flask import Response
-    return Response(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={'Content-Disposition': 'attachment; filename=violations_report.csv'}
-    )
-
-@app.route('/api/stats')
-@login_required
-def api_stats():
-    """Returns dashboard statistics."""
-    db = SessionLocal()
-    try:
-        total_violations = db.query(Violation).count()
-        today = datetime.date.today()
-        today_start = datetime.datetime.combine(today, datetime.time.min)
-        today_violations = db.query(Violation)\
-            .filter(Violation.timestamp >= today_start).count()
-        return jsonify({
-            'status': 'ok',
-            'total_violations': total_violations,
-            'today_violations': today_violations,
-        })
-    finally:
-        db.close()
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Socket.IO: Supervision Namespace
-# ─────────────────────────────────────────────────────────────────────────────
+# Supervision Namespace
 @socketio.on('connect', namespace='/supervision')
 def supervision_connect():
     logger.info(f"[SOCKET] Supervision client connected: {request.sid}")
